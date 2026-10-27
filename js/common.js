@@ -306,7 +306,8 @@
 
   // ---------- Quiz ----------
   // cfg: { lessonId, total, get(i) → câu hỏi, visual?(box, q) → đồ dùng, onCorrect?(đồ dùng, q),
-  //        picker? – hiện hàng nút số để bé tự chọn câu, nhớ câu đã làm }
+  //        picker? – hiện hàng nút số để bé tự chọn câu, nhớ câu đã làm,
+  //        stars? – được cộng ⭐ (chỉ dùng cho Thử thách TIMO; luyện tập và game không có sao) }
   // câu hỏi: { en?, vi, tag?, choices: [{ value, html }], answer, steps: [html], hint? }
   const CHEER_OK = ['Đúng rồi! Con giỏi quá!', 'Tuyệt vời! Zoombe nhảy cẫng lên nè!', 'Chính xác! Con là siêu sao!', 'Hoan hô! Đúng rồi nha!'];
   const CHEER_TRY = ['Gần đúng rồi! Mình thử lại nhé!', 'Không sao đâu! Bấm Gợi ý xem nha.', 'Zoombe tin con làm được! Thử lần nữa nào!'];
@@ -389,18 +390,20 @@
             done = true;
             b.classList.add('right');
             $$('.choice', box).forEach(x => { x.disabled = true; });
-            const got = tries === 0 ? 2 : 1;
+            // Chỉ quiz có cfg.stars (Thử thách TIMO) mới cộng sao, và mỗi câu chỉ cộng 1 lần
+            const already = cfg.picker && marks()[idx];
+            const got = cfg.stars && !already ? (tries === 0 ? 2 : 1) : 0;
             if (tries === 0) firstTry++;
             record(cfg.lessonId, q.vi, tries === 0);
             mark(tries === 0);
             sfx.ting();
             confetti(40);
             const cheer = pick(CHEER_OK);
-            talk(guide, `${cheer} <b>+${got} ⭐</b>`, 'party', cheer);
+            talk(guide, got ? `${cheer} <b>+${got} ⭐</b>` : cheer, 'party', cheer);
             while (shown < q.steps.length) addStep();
             hintBtn.disabled = true;
             nextBtn.hidden = false;
-            addStars(got);
+            if (got) addStars(got);
             if (cfg.onCorrect) cfg.onCorrect(tool, q);
           } else {
             tries++;
@@ -690,10 +693,9 @@
             if (matched === pairs.length) {
               record(cfg.lessonId, 'Lật thẻ ghép đôi', misses <= pairs.length);
               setTimeout(() => {
-                info.innerHTML = '🎉 Con ghép xong hết rồi! <b>+3 ⭐</b>';
+                info.innerHTML = '🎉 Con ghép xong hết rồi! Giỏi quá!';
                 say('Con ghép xong hết rồi! Giỏi quá!');
                 confetti();
-                addStars(3);
               }, 700);
             }
           } else {

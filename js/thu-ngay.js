@@ -228,7 +228,7 @@
     .concat(TIME_WORDS.slice(0, 5).map(w => ({ a: { text: w.en, lang: 'en' }, b: { text: w.vi, lang: 'vi' } })));
   TV.memory($('#memDate'), { lessonId: 'ngay-the', pairs, count: 6 });
 
-  TV.quiz($('#bookDate'), { lessonId: 'ngay-timo', total: BOOK_DATE.length, picker: true, get: i => toQuiz(BOOK_DATE[i]), visual: wheelTool, onCorrect: replay });
+  TV.quiz($('#bookDate'), { lessonId: 'ngay-timo', total: BOOK_DATE.length, picker: true, stars: true, get: i => toQuiz(BOOK_DATE[i]), visual: wheelTool, onCorrect: replay });
 
   // ---------- Bài tự làm: chọn 1 trong 7 thứ, nộp bài xong mới xem cách giải ----------
   TV.selfTest($('#testDate'), {

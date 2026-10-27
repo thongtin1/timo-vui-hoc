@@ -137,6 +137,7 @@
     lessonId: 'tuoi-timo',
     total: BOOK_AGE.length,
     picker: true,
+    stars: true,
     get: i => toQuiz({ ...BOOK_AGE[i], choices: shuffle(BOOK_AGE[i].choices) }),
     visual: cakeTool,
     onCorrect: lightAndBlow,
