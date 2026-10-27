@@ -70,6 +70,25 @@
     };
   }
 
+  // Phép tính có cả + và −: kết quả chẵn hay lẻ? Cộng hay trừ một số lẻ đều làm đổi chẵn ↔ lẻ.
+  function exprParityQ(o) {
+    const tokens = o.expr.split(' '), nums = tokens.filter(t => /^\d+$/.test(t)).map(Number);
+    const od = idxOf(nums, 'odd'), O = od.length, val = evalExpr(o.expr), calc = val % 2 ? 'odd' : 'even';
+    return {
+      src: o.src, title: o.title, type: 'oddeven', answer: o.answer || calc, calc, hint: 2,
+      en: `Determine whether the result of ${o.expr} is odd or even.`,
+      vi: `Kết quả của ${o.expr} là số chẵn hay số lẻ?`,
+      visual: box => V().chips(box, tokens),
+      steps: [
+        { text: `🟠 Tìm các số lẻ: ${od.map(i => nums[i]).join(', ')} → có <b>${O}</b> số lẻ.`, run: t => t.mark(od, 'odd') },
+        { text: '💡 Dấu + hay dấu − cũng vậy: hai số lẻ gặp nhau thì thành chẵn.' },
+        { text: `🤝 Ghép đôi ${O} số lẻ: được ${Math.floor(O / 2)} cặp, ${O % 2 ? '<b>thừa 1 số lẻ</b> → kết quả lẻ' : '<b>không thừa</b> → kết quả chẵn'}.` },
+        { text: `✅ Tính thử: ${o.expr} = ${val}. Đúng là số ${KIND[calc]}!` },
+        { text: `🎉 Đáp án: số <b>${KIND[calc]} (${calc})</b>` },
+      ],
+    };
+  }
+
   // VQG 2024–2025 · Câu 25: tính từng phép tính, đếm số chẵn nhỏ hơn 20
   const EXPRS = ['9 + 6', '15 + 6', '49 − 31', '57 − 27', '9 + 13', '8 + 6', '38 − 26'];
   const vals = EXPRS.map(evalExpr);
@@ -173,6 +192,9 @@
       sumQ({ src: 'Giống câu 13 – Mock 2025', nums: [1, 3, 5, 7, 9, 11], answer: 'even' }),
       sumQ({ src: 'VQG 2024–2025 · Câu 15', nums: [2, 5, 7, 8, 11, 13, 14, 15, 17, 20, 21, 23], answer: 'even' }),
       q25,
+      // Bổ sung: VQG 2025–2026
+      pickQ({ src: 'VQG 2025–2026 · Câu 11', nums: [38, 63, 27, 12, 91, 17, 71], kind: 'odd', order: 'min', rank: 1, answer: 17 }),
+      exprParityQ({ src: 'VQG 2025–2026 · Câu 15', expr: '5 + 7 − 9 + 11 − 13 + 19 − 17 + 20', answer: 'odd' }),
     ],
   });
 })(typeof window !== 'undefined' ? window : globalThis);

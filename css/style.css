@@ -455,6 +455,91 @@ p.say::after, li.say::after, h1.say::after, .bubble.say::after { content: " 🔊
 .even-t { color: #1c7ed6; }
 .odd-t { color: #e8590c; }
 
+/* ---------- Hình SVG dùng chung ---------- */
+.v-svg { display: flex; flex-direction: column; align-items: center; margin: 8px 0; }
+.v-svg svg { width: 100%; max-width: 340px; height: auto; overflow: visible; }
+.v-draw { stroke-dasharray: 400; stroke-dashoffset: 400; animation: draw .5s forwards; }
+.v-pop { animation: pop .4s; transform-box: fill-box; transform-origin: center; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.pad.hl { background: #fff3bf; border-color: var(--gold); }
+.big-emoji { font-size: 1.8rem; line-height: 1; }
+.v-code > div { margin-bottom: 6px; }
+.g-say { text-align: center; font-weight: 700; min-height: 1.4em; }
+.cb.hl { fill: #ffe066; }
+.cb.z1.hl { fill: #ffc078; }
+.cb.z2.hl { fill: #faa2c1; }
+.cb.z3.hl { fill: #8ce99a; }
+
+/* Đồng hồ */
+.v-clock { display: flex; flex-direction: column; align-items: center; }
+.v-clock svg { width: min(220px, 70vw); height: auto; }
+.ck-n { font-size: 17px; font-weight: 800; fill: var(--ink); transition: fill .2s; }
+.ck-n.cnt { fill: #e8590c; }
+.ck-n.ans { fill: var(--ok); font-size: 21px; }
+.ck-hour { transform-origin: 100px 100px; transition: transform .45s ease; }
+.ck-say { margin: 4px 0 0; font-weight: 700; }
+
+/* Xếp hàng */
+.queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 4px; margin: 8px 0; }
+.q-head { font-size: .75rem; color: var(--muted); font-weight: 700; }
+.kid { position: relative; font-size: 1.5rem; line-height: 1; padding: 3px; border-radius: 10px; border: 2px solid transparent; }
+.kid.me { background: #fff3bf; border-color: var(--gold); }
+.kid.front { background: #d0ebff; }
+.kid.back { background: #ffe8cc; }
+.kid[data-n]::after {
+  content: attr(data-n); position: absolute; bottom: -8px; right: -4px; min-width: 16px; height: 16px; border-radius: 8px;
+  font-size: .62rem; font-weight: 800; color: #fff; background: #495057; display: flex; align-items: center; justify-content: center;
+}
+
+/* Các nhóm đồ vật */
+.groups { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 8px 0; }
+.grp-box { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; max-width: 150px; padding: 6px 8px; border-radius: 14px; background: #f8f9fa; border: 2px solid #dee2e6; }
+.grp-box.big { border-width: 3px; border-color: #b197fc; }
+.grp-items { font-size: 1.05rem; line-height: 1.3; text-align: center; word-break: break-all; min-height: 1.3em; }
+.grp-big { white-space: nowrap; font-weight: 800; }
+.grp-box small { font-size: .7rem; font-weight: 700; color: var(--muted); text-align: center; }
+.grp-box.hl { background: #fff3bf; border-color: var(--gold); }
+.grp-box.lack { background: #fff5f5; border-color: #ffc9c9; }
+.grp-box.new { background: #ebfbee; border-color: var(--ok); }
+.grp-box.gift { background: #fff0f6; border-color: #f783ac; }
+
+/* Que chục, khối đơn vị */
+.blocks { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-end; margin: 8px 0; }
+.blk-part { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 4px; padding: 6px; border-radius: 14px; border: 2px dashed transparent; max-width: 220px; }
+.blk-part small { flex-basis: 100%; text-align: center; font-weight: 700; color: var(--muted); }
+.blk-part.hl { border-color: var(--gold); background: #fff9db; }
+.ten { width: 12px; height: 100px; border-radius: 3px; background: repeating-linear-gradient(to top, #4dabf7 0 8px, #fff 8px 10px); border: 1px solid #1c7ed6; }
+.hund { width: 60px; height: 60px; border-radius: 4px; background: repeating-linear-gradient(90deg, #b197fc 0 4px, #fff 4px 6px), #b197fc; border: 1px solid #7048e8; }
+.units { display: grid; grid-template-columns: repeat(3, 12px); gap: 3px; }
+.unit { width: 12px; height: 12px; border-radius: 2px; background: #ffd43b; border: 1px solid #e6a700; }
+
+/* Tiền xu */
+.coins { margin: 8px 0; text-align: center; }
+.coin-row { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin: 4px 0; }
+.coin { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; font-size: .78rem; font-weight: 800; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .15); }
+.coin.c1 { background: #dee2e6; color: #495057; }
+.coin.c2 { background: #ffd8a8; color: #a3480b; }
+.coin.c5 { background: #ffe066; color: #8a5a00; width: 44px; height: 44px; }
+.coin-out p { margin: 8px 0 2px; font-weight: 700; }
+
+/* Cái cân */
+.scales { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 8px 0; }
+.scale-one { display: flex; flex-direction: column; align-items: center; width: min(220px, 44vw); padding: 4px; border-radius: 14px; border: 2px solid transparent; }
+.scale-one svg { width: 100%; height: auto; }
+.scale-one small { font-weight: 700; color: var(--muted); }
+.scale-one.hl { border-color: var(--gold); background: #fff9db; }
+
+/* Điền dấu, phép cộng đặt cột */
+.sign-eq { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 4px; font-size: 1.6rem; }
+.sign-btn {
+  width: 52px; height: 52px; border-radius: 14px; border: 3px dashed var(--pri); background: var(--pri-soft);
+  font-size: 1.8rem; font-weight: 800; color: var(--pri-d); cursor: pointer;
+}
+.sign-btn.pop { animation: pop .3s; }
+.small-eq, .eq-small { font-size: .95rem; white-space: nowrap; }
+.col-add { width: max-content; margin: 8px auto; font-size: 1.8rem; font-weight: 800; text-align: right; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.col-sum { border-top: 3px solid var(--ink); margin-top: 2px; }
+
 /* ---------- Bài tự làm ---------- */
 .ans-show { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 0 10px; font-weight: 700; }
 .ans-box {

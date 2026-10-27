@@ -461,10 +461,14 @@
   const ODD_EVEN = [{ value: 'even', html: '<b>Chẵn</b><small>even</small>' }, { value: 'odd', html: '<b>Lẻ</b><small>odd</small>' }];
   const norm = v => String(v).trim().toUpperCase();
   const filled = v => v != null && v !== '';
-  const isRight = (q, v) => filled(v) && norm(v) === norm(q.answer);
+  // Câu điền dấu có thể có nhiều cách đúng, nên chấm bằng q.check(v) nếu có
+  const isRight = (q, v) => filled(v) && (q.check ? q.check(v) : norm(v) === norm(q.answer));
   const listOf = q => (q.type === 'oddeven' ? ODD_EVEN : q.type === 'choice' ? q.choices : null);
+  // Phép tính điền dấu: nums [2, 3, 4], signs '+-' → "2 + 3 − 4 = 1"
+  const signsText = (q, v) => q.nums.map((n, i) => (i ? ` ${(v[i - 1] || '?').replace('-', '−')} ` : '') + n).join('') + ` = ${q.target}`;
   function answerHtml(q, v) {
     if (!filled(v)) return '<span class="muted">chưa làm</span>';
+    if (q.type === 'signs') return `<b class="ans-val">${esc(signsText(q, v))}</b>`;
     const c = (listOf(q) || []).find(x => norm(x.value) === norm(v));
     return c ? `<span class="ans-chip">${c.html}</span>` : `<b class="ans-val">${esc(v)}</b>`;
   }
@@ -486,16 +490,37 @@
       });
       return;
     }
-    const keys = q.type === 'letter' ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat('⌫') : '1 2 3 4 5 6 7 8 9 ⌫ 0'.split(' ');
+    if (q.type === 'signs') {
+      // Bấm vào ô giữa 2 số để đổi dấu: ? → + → − → +
+      const cur = () => (v.length === q.nums.length - 1 ? v : '?'.repeat(q.nums.length - 1)).split('');
+      let s = cur();
+      box.innerHTML = `<div class="sign-eq">${q.nums.map((n, i) => (i ? `<button class="sign-btn" data-i="${i - 1}">${s[i - 1] === '-' ? '−' : s[i - 1]}</button>` : '') + `<b>${n}</b>`).join('')}<b>= ${q.target}</b></div>
+        <p class="tip center">👆 Bấm vào ô để đổi dấu + hoặc −</p>`;
+      box.addEventListener('click', e => {
+        const b = e.target.closest('.sign-btn');
+        if (!b) return;
+        const i = Number(b.dataset.i);
+        s[i] = s[i] === '+' ? '-' : '+';
+        b.textContent = s[i] === '-' ? '−' : '+';
+        restart(b, 'pop');
+        sfx.pop();
+        v = s.includes('?') ? '' : s.join('');
+        onChange(v);
+      });
+      return;
+    }
+    const letters = q.type === 'letter' || q.type === 'word';
+    const keys = letters ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat('⌫') : '1 2 3 4 5 6 7 8 9 ⌫ 0'.split(' ');
     box.innerHTML = `<div class="ans-show"><span>✏️ Con điền:</span><b class="ans-box">${v ? esc(v) : '?'}</b></div>
-      <div class="keypad ${q.type}">${keys.map(k => `<button class="key-btn ${k === '⌫' ? 'del' : ''}" data-k="${k}">${k}</button>`).join('')}</div>`;
+      <div class="keypad ${letters ? 'letter' : 'num'}">${keys.map(k => `<button class="key-btn ${k === '⌫' ? 'del' : ''}" data-k="${k}">${k}</button>`).join('')}</div>`;
     box.addEventListener('click', e => {
       const b = e.target.closest('.key-btn');
       if (!b) return;
       const k = b.dataset.k;
       if (k === '⌫') v = v.slice(0, -1);
       else if (q.type === 'letter') { v = k; say(k, 'en'); }
-      else if (v.length < 5) v = (v === '0' ? '' : v) + k;
+      else if (q.type === 'word') { if (v.length < 10) v += k; say(k, 'en'); }
+      else if (v.length < 9) v = (v === '0' ? '' : v) + k;
       $('.ans-box', box).textContent = v || '?';
       restart($('.ans-box', box), 'pop');
       sfx.pop();
@@ -704,7 +729,7 @@
     sfx, confetti, modal, ask,
     STICKERS, STARS_PER_STICKER, addStars, record, resetAll, getState: () => state,
     available, getRewards, setRewards, redeem,
-    steps, solve, quiz, selfTest, memory, ODD_EVEN,
+    steps, solve, quiz, selfTest, memory, ODD_EVEN, signsText,
   };
 
   renderTopbar();

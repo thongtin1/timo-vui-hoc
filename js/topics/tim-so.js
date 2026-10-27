@@ -74,6 +74,33 @@
     });
   }
 
+  // Phép cộng đặt cột có chữ cái thay chữ số. rows: ['6A', 'A4'], sum: '152'. Máy thử mọi chữ số để kiểm tra.
+  function colQ(o) {
+    const letters = Array.from(new Set((o.rows.join('') + o.sum).match(/[A-Z]/g)));
+    const val = (s, m) => Number(s.replace(/[A-Z]/g, c => m[c]));
+    let calc = null;
+    (function go(i, m) {
+      if (calc != null) return;
+      if (i === letters.length) {
+        const lead = o.rows.concat(o.sum).every(r => !/[A-Z]/.test(r[0]) || m[r[0]] !== 0);
+        const diff = new Set(Object.values(m)).size === letters.length;
+        if (lead && diff && o.rows.reduce((a, r) => a + val(r, m), 0) === val(o.sum, m)) calc = m[o.ask];
+        return;
+      }
+      for (let d = 0; d <= 9; d++) go(i + 1, { ...m, [letters[i]]: d });
+    })(0, {});
+    const sp = s => s.split('').join(' ');
+    return {
+      title: o.title, src: o.src, en: o.en, vi: o.vi, type: 'num', answer: o.answer != null ? o.answer : calc, calc, hint: 1,
+      wrong: o.wrong || [calc + 1, calc - 1],
+      visual: box => {
+        box.innerHTML = `<div class="col-add">${o.rows.map((r, i) => `<div>${i ? '+ ' : '&nbsp; '}${sp(r)}</div>`).join('')}<div class="col-sum">${sp(o.sum)}</div></div>`;
+        return null;
+      },
+      steps: o.steps.concat({ text: `🎉 Đáp án: <b>${o.ask} = ${calc}</b>` }),
+    };
+  }
+
   function gen() {
     const sym = pick(['A', '?']), kind = rand(1, 4);
     if (kind === 1) {
@@ -148,7 +175,26 @@
           { text: '🧮 35 − 20 = <b>15</b>', run: t => t.reveal(0, 0, '? = 15') },
           { text: '✅ Thử lại: 35 − 15 = 20. Đúng rồi!' },
         ] }),
-      findQ({ src: 'Giống câu 10 – VQG 2024–2025', eqs: ['A + 7 = 12', 'B + A = 9'], ask: 'B', answer: 4,
+      // Bổ sung: VQG 2025–2026 và đề chính thức VQG 2024–2025 câu 10
+      partQ({ src: 'VQG 2025–2026 · Câu 9', whole: 88, known: 57, x: 31, sym: '?', eq: '88 − ? = 57', first: true, answer: 31,
+        en: 'What is the number that should be filled in the blank? 88 − ? = 57', vi: 'Số nào thích hợp điền vào chỗ trống? 88 − ? = 57' }),
+      colQ({ src: 'VQG 2025–2026 · Câu 10', rows: ['6A', 'A4'], sum: '152', ask: 'A', answer: 8,
+        en: 'Given that A is a 1-digit number, find the value of A: 6A + A4 = 152',
+        vi: 'Biết A là số có 1 chữ số. Tìm A trong phép cộng: 6A + A4 = 152',
+        steps: [
+          { text: '👉 Nhìn hàng đơn vị (cột bên phải): A + 4 có chữ số cuối là <b>2</b>.' },
+          { text: '🤔 Số nào cộng 4 ra số có chữ số cuối là 2? 8 + 4 = 12 → A = 8 (nhớ 1 sang hàng chục).' },
+          { text: '✅ Thử lại: 68 + 84 = 152. Đúng rồi!' },
+        ] }),
+      colQ({ src: 'VQG 2024–2025 · Câu 10', rows: ['A', 'AB'], sum: '51', ask: 'B', answer: 7,
+        en: 'Given that A and B represent different 1-digit numbers, what is the value of B if the equation is correct? A + AB = 51',
+        vi: 'A và B là hai chữ số khác nhau. Biết A + AB = 51 (AB là số có 2 chữ số). Hỏi B bằng mấy?',
+        steps: [
+          { text: '🔢 AB là số có A chục và B đơn vị. A + AB = 51 nên AB nhỏ hơn 51 → A là 1, 2, 3 hoặc 4.' },
+          { text: '🤔 Thử A = 4: 4 + 4B = 51 → 4B = 51 − 4 = 47 → B = 7. (A = 3 thì 3B = 48, không được vì 3B chỉ từ 30 đến 39.)' },
+          { text: '✅ Thử lại: 4 + 47 = 51. Đúng rồi!' },
+        ] }),
+      findQ({ src: 'Giống đề TIMO', eqs: ['A + 7 = 12', 'B + A = 9'], ask: 'B', answer: 4,
         en: 'A and B represent different 1-digit numbers. A + 7 = 12 and B + A = 9. What is the value of B?',
         vi: 'A và B là hai số có 1 chữ số khác nhau. Biết A + 7 = 12 và B + A = 9. Hỏi B bằng mấy?',
         bars: [

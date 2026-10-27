@@ -111,6 +111,11 @@
       letterQ({ src: 'Đề 1 · Câu 20', seq: 'D K E L F M G _ H', answer: 'N' }),
       letterQ({ src: 'Đề cương TIMO', seq: 'P Q O S N U M _ L', answer: 'W' }),
       letterQ({ src: 'VQG 2024–2025 · Câu 2', seq: 'D A G C J E M G _', answer: 'P' }),
+      // Bổ sung: VQG 2025–2026 và phiếu luyện "Dãy chữ, số"
+      letterQ({ src: 'VQG 2025–2026 · Câu 5', seq: 'B F J N R _', answer: 'V' }),
+      letterQ({ src: 'Phiếu Dãy chữ · Câu 1', seq: 'C G K O S _', answer: 'W' }),
+      letterQ({ src: 'Phiếu Dãy chữ · Câu 22', seq: 'B A E C H E K G _', answer: 'N' }),
+      letterQ({ src: 'Phiếu Dãy chữ · Câu 26', seq: 'D C H D L E P F _', answer: 'T' }),
     ],
   });
 })(typeof window !== 'undefined' ? window : globalThis);

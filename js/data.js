@@ -236,6 +236,28 @@
     };
   }
 
+  // ---------- Câu tuổi tạo từ số liệu (để máy tự tính đáp án) ----------
+  // ago năm trước a là was tuổi; b hơn a more tuổi → b bây giờ bao nhiêu tuổi?
+  function agoOlderQ(o) {
+    const now = o.was + o.ago, calc = now + o.more;
+    return {
+      src: o.src, answer: o.answer, calc,
+      en: `${o.ago} years ago, ${o.a} was ${o.was} years old. ${o.b} is ${o.more} years older than ${o.a}. How old is ${o.b} now?`,
+      vi: `${o.ago} năm trước, ${o.a} ${o.was} tuổi. ${o.b} hơn ${o.a} ${o.more} tuổi. Hỏi bây giờ ${o.b} bao nhiêu tuổi?`,
+      steps: [`⏪ ${o.ago} năm trước ${o.a} ${o.was} tuổi → bây giờ ${o.a}: ${o.was} + ${o.ago} = <b>${now}</b> tuổi.`, `⬆️ ${o.b} hơn ${o.a} ${o.more} tuổi.`, `🧮 ${now} + ${o.more} = <b>${calc}</b>`],
+    };
+  }
+  // ago năm trước a là was tuổi; later năm nữa b sẽ will tuổi → a ít hơn b mấy tuổi?
+  function youngerQ(o) {
+    const an = o.was + o.ago, bn = o.will - o.later, calc = bn - an;
+    return {
+      src: o.src, answer: o.answer, calc,
+      en: `${o.a} was ${o.was} years old ${o.ago} years ago, and ${o.b} will be ${o.will} years old ${o.later} years later. How many years younger is ${o.a} than ${o.b}?`,
+      vi: `${o.ago} năm trước ${o.a} ${o.was} tuổi. ${o.later} năm nữa ${o.b} sẽ ${o.will} tuổi. Hỏi ${o.a} ít hơn ${o.b} mấy tuổi?`,
+      steps: [`⏪ Bây giờ ${o.a}: ${o.was} + ${o.ago} = <b>${an}</b> tuổi.`, `⏩ ${o.later} năm nữa ${o.b} mới ${o.will} tuổi → bây giờ ${o.b}: ${o.will} − ${o.later} = <b>${bn}</b> tuổi.`, `➖ Ít hơn: ${bn} − ${an} = <b>${calc}</b>`],
+    };
+  }
+
   // ---------- Bài tự làm của Bài 4 và Bài 5 (câu trong đề ôn + câu cùng dạng) ----------
   const TEST_DATE = [
     { src: 'Mock 2025 · Câu 3', ref: 'tomorrow', refDay: 4, offset: 11,
@@ -250,6 +272,25 @@
     { src: 'Giống đề TIMO', ref: 'yesterday', refDay: 6, offset: -5,
       en: 'Yesterday was Sunday. Which day of the week was it 5 days ago (from today)?',
       vi: 'Hôm qua là Chủ nhật. Hỏi 5 ngày trước (tính từ hôm nay) là thứ mấy?' },
+    // Bổ sung: VQG 2025–2026 và phiếu luyện "Xếp hàng – ngày tuần". expect = đáp án ghi tay để test/check.js đối chiếu.
+    { src: 'VQG 2025–2026 · Câu 4', ref: 'yesterday', refDay: 2, offset: 10, expect: 'Sunday',
+      en: 'If yesterday was Wednesday, which day of the week will it be 10 days from today?',
+      vi: 'Nếu hôm qua là thứ Tư, hỏi 10 ngày nữa (tính từ hôm nay) là thứ mấy?' },
+    { src: 'Phiếu Ngày tuần · Câu 5', ref: 'tomorrow', refDay: 2, offset: -11, expect: 'Friday',
+      en: 'If tomorrow is Wednesday, what day of the week was it 11 days ago from today?',
+      vi: 'Nếu ngày mai là thứ Tư, hỏi 11 ngày trước (tính từ hôm nay) là thứ mấy?' },
+    { src: 'Phiếu Ngày tuần · Bài 9', ref: 'yesterday', refDay: 1, offset: 11, expect: 'Sunday',
+      en: 'If yesterday was Tuesday, which day of the week will it be 11 days from today?',
+      vi: 'Nếu hôm qua là thứ Ba, hỏi 11 ngày nữa (tính từ hôm nay) là thứ mấy?' },
+    { src: 'Phiếu Ngày tuần · Bài 12', ref: 'yesterday', refDay: 2, offset: 15, expect: 'Friday',
+      en: 'If yesterday was Wednesday, which day of the week will it be 15 days from today?',
+      vi: 'Nếu hôm qua là thứ Tư, hỏi 15 ngày nữa (tính từ hôm nay) là thứ mấy?' },
+    { src: 'Phiếu Ngày tuần · Bài 16', ref: 'tomorrow', refDay: 5, offset: -12, expect: 'Sunday',
+      en: 'If tomorrow is Saturday, what day of the week was it 12 days ago from today?',
+      vi: 'Nếu ngày mai là thứ Bảy, hỏi 12 ngày trước (tính từ hôm nay) là thứ mấy?' },
+    { src: 'Phiếu Ngày tuần · Bài 21', ref: 'tomorrow', refDay: 1, offset: -14, expect: 'Monday',
+      en: 'If tomorrow is Tuesday, what day of the week was it 14 days ago from today?',
+      vi: 'Nếu ngày mai là thứ Ba, hỏi 14 ngày trước (tính từ hôm nay) là thứ mấy?' },
   ];
 
   const TEST_AGE = [
@@ -272,15 +313,23 @@
       en: 'Lan is the same age as Na. 2 years ago, Lan was 5 years old. What is the sum of their ages now?',
       vi: 'Lan bằng tuổi Na. 2 năm trước Lan 5 tuổi. Hỏi bây giờ tổng số tuổi của Lan và Na là bao nhiêu?',
       steps: ['⏪ 2 năm trước Lan 5 tuổi → bây giờ Lan: 5 + 2 = <b>7</b> tuổi.', '👯 Na bằng tuổi Lan → Na cũng 7 tuổi.', '➕ Tổng: 7 + 7 = <b>14</b>'] },
-  ].map(q => ({ ...q, type: 'num', steps: q.steps.concat(`🎉 Đáp án: <b>${q.answer}</b>`) }));
+  ].concat(
+    // Bổ sung: VQG 2025–2026 và 2 phiếu luyện "Tuổi" (máy tự tính calc để đối chiếu với answer)
+    agoOlderQ({ src: 'Phiếu Tuổi · Câu 1', a: 'Liam', ago: 9, was: 7, b: 'Emma', more: 5, answer: 21 }),
+    agoOlderQ({ src: 'Phiếu Tuổi · Câu 6', a: 'Aiden', ago: 10, was: 5, b: 'Isabella', more: 8, answer: 23 }),
+    agoOlderQ({ src: 'Phiếu Tuổi 2 · Câu 7', a: 'Max', ago: 10, was: 6, b: 'Rose', more: 9, answer: 25 }),
+    youngerQ({ src: 'VQG 2025–2026 · Câu 3', a: 'Ariel', ago: 2, was: 10, b: 'Henry', later: 10, will: 24, answer: 2 }),
+    youngerQ({ src: 'Phiếu Tuổi · Câu 11', a: 'Ava', ago: 3, was: 8, b: 'Lucas', later: 4, will: 19, answer: 4 }),
+    youngerQ({ src: 'Phiếu Tuổi 2 · Câu 13', a: 'Helen', ago: 5, was: 10, b: 'Mark', later: 7, will: 24, answer: 2 }),
+  ).map(q => ({ ...q, type: 'num', steps: q.steps.concat(`🎉 Đáp án: <b>${q.answer}</b>`) }));
 
   // ---------- 5 phần của đề TIMO và các bài đã có trang riêng ----------
   const PARTS = [
-    { id: 'A', icon: '🧠', vi: 'Tư duy logic', en: 'Logical thinking', color: '#7048e8', soon: 'Mật mã · Quy luật hình · Xếp hàng · Xem giờ' },
-    { id: 'B', icon: '➕', vi: 'Số học', en: 'Arithmetic', color: '#e64980', soon: 'Điền dấu + −' },
-    { id: 'C', icon: '🔢', vi: 'Lý thuyết số', en: 'Number theory', color: '#228be6', soon: 'So sánh số · Cấu tạo số · Gói và hộp' },
-    { id: 'D', icon: '📐', vi: 'Hình học', en: 'Geometry', color: '#2f9e44', soon: 'Đoạn thẳng · Hình vuông · Cạnh và góc · Khối lập phương' },
-    { id: 'E', icon: '🎲', vi: 'Tổ hợp', en: 'Combinatorics', color: '#e8590c', soon: 'Đổi tiền xu · Lập số · Cái cân · Đếm số' },
+    { id: 'A', icon: '🧠', vi: 'Tư duy logic', en: 'Logical thinking', color: '#7048e8' },
+    { id: 'B', icon: '➕', vi: 'Số học', en: 'Arithmetic', color: '#e64980' },
+    { id: 'C', icon: '🔢', vi: 'Lý thuyết số', en: 'Number theory', color: '#228be6' },
+    { id: 'D', icon: '📐', vi: 'Hình học', en: 'Geometry', color: '#2f9e44' },
+    { id: 'E', icon: '🎲', vi: 'Tổ hợp', en: 'Combinatorics', color: '#e8590c' },
   ];
   const LINKS = [
     { part: 'A', href: 'bai-thu-ngay.html', icon: '📅', title: 'Thứ · Ngày · Tháng', sub: 'Zoombe nhảy vòng tròn 7 ngày', test: 'ngay-test', n: TEST_DATE.length },

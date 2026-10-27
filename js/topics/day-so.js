@@ -37,6 +37,45 @@
     };
   }
 
+  // Dãy có bước nhảy tăng dần: 1, 3, 7, 13, 21 (+2, +4, +6, +8) → hỏi số tiếp theo
+  function growQ(o) {
+    const L = o.list, gaps = L.slice(1).map((v, i) => v - L[i]), e = gaps[1] - gaps[0];
+    const nextGap = gaps[gaps.length - 1] + e, calc = L[L.length - 1] + nextGap;
+    return {
+      title: o.title, src: o.src, type: 'num', answer: o.answer != null ? o.answer : calc, calc, hint: 2,
+      en: `Find the next number in the pattern: ${L.join(', ')}, ...`, vi: `Tìm số tiếp theo của dãy: ${L.join(', ')}, ...`,
+      wrong: [L[L.length - 1] + gaps[gaps.length - 1], calc + e, calc - 1],
+      visual: box => { const t = V().seq(box, L.concat(null)); t.mark([L.length], 'target'); return t; },
+      steps: [
+        { text: `🔍 Tính bước nhảy giữa 2 số cạnh nhau: ${gaps.map(g => `+${g}`).join(', ')}.`, run: t => t.hops(gaps.map(g => `+${g}`)) },
+        { text: `💡 Bước nhảy không đều, mà mỗi lần tăng thêm <b>${e}</b>: ${gaps.join(' → ')} → tiếp theo là <b>${nextGap}</b>.`, run: t => t.hops(gaps.map(g => `+${g}`).concat(`+${nextGap}`)) },
+        { text: `🐸 ${L[L.length - 1]} + ${nextGap} = <b>${calc}</b>`, run: t => t.fill(L.length, calc) },
+        { text: `🎉 Đáp án: <b>${calc}</b>` },
+      ],
+    };
+  }
+
+  // Hai dãy xen kẽ: 2, 3, 5, 5, 8, 7, 11, 9, … → số ở vị trí lẻ một dãy, vị trí chẵn một dãy
+  function mixQ(o) {
+    const L = o.list, pos = L.length, sub = g => L.filter((_, i) => i % 2 === g), mine = sub(pos % 2);
+    const dOf = s => s[1] - s[0], d = dOf(mine), calc = mine[mine.length - 1] + d;
+    const name = g => (g ? '🟠 dãy cam (vị trí thứ 2, 4, 6…)' : '🟣 dãy tím (vị trí thứ 1, 3, 5…)');
+    const say = s => `${s.join(', ')} → mỗi lần ${dOf(s) > 0 ? 'thêm' : 'bớt'} ${Math.abs(dOf(s))}`;
+    return {
+      title: o.title, src: o.src, type: 'num', answer: o.answer != null ? o.answer : calc, calc, hint: 3,
+      en: `What is the next number in the sequence? ${L.join(', ')}, ...`, vi: `Số nào thích hợp điền tiếp vào dãy? ${L.join(', ')}, ...`,
+      wrong: [sub(1 - pos % 2).slice(-1)[0] + dOf(sub(1 - pos % 2)), calc + 1, calc - d],
+      visual: box => { const t = V().seq(box, L.concat(null), { group: i => i % 2 }); t.mark([pos], 'target'); return t; },
+      steps: [
+        { text: '👀 Các số lúc tăng lúc giảm lộn xộn → tách thành 2 dãy xen kẽ, tô 2 màu.' },
+        { text: `${name(0)}: ${say(sub(0))}.` },
+        { text: `${name(1)}: ${say(sub(1))}.` },
+        { text: `👉 Số cần tìm ở vị trí thứ ${pos + 1} → thuộc ${pos % 2 ? 'dãy cam' : 'dãy tím'}: ${mine[mine.length - 1]} ${d > 0 ? '+' : '−'} ${Math.abs(d)} = <b>${calc}</b>`, run: t => t.fill(pos, calc) },
+        { text: `🎉 Đáp án: <b>${calc}</b>` },
+      ],
+    };
+  }
+
   const show = L => L.map(v => (v == null ? '___' : v)).join(', ');
   const nth = k => `${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'}`;
   function textNext(L) {
@@ -76,7 +115,7 @@
   ];
 
   (root.TVTopics = root.TVTopics || []).push({
-    id: 'day-so', part: 'C', icon: '🐸', title: 'Dãy số cách đều', sub: 'Ếch nhảy đều từng bậc',
+    id: 'day-so', part: 'C', icon: '🐸', title: 'Quy luật dãy số', sub: 'Ếch nhảy theo quy luật',
     intro: 'Dãy số cách đều giống chú ếch nhảy: lần nào cũng nhảy xa bằng nhau. Tìm được bước nhảy là giải được bài!',
     words: [
       { en: 'Sequence', vi: 'Dãy số', icon: '🔢' },
@@ -92,11 +131,15 @@
       '🔍 Bước 1: Lấy 2 số cạnh nhau, xem số sau thêm (hay bớt) bao nhiêu. Đó là bước nhảy.',
       '🐸 Bước 2: Ếch nhảy đều. Lần nào cũng thêm (hay bớt) đúng bước nhảy đó.',
       '🎯 Bước 3: Đề hỏi "số thứ 8" thì nhảy từng bước, đếm cho tới số thứ 8.',
+      '📈 Bước nhảy không đều? Xem bước nhảy có tăng dần đều không: +2, +4, +6… → tiếp theo +8.',
+      '🟣🟠 Số lúc lên lúc xuống? Tách thành 2 dãy xen kẽ: số thứ 1, 3, 5… và số thứ 2, 4, 6…',
     ],
     examples: [
       ex('Ví dụ 1 · Dãy tăng ⬆️', { list: L1, ask: 5, ...textNext(L1) }),
       ex('Ví dụ 2 · Dãy giảm ⬇️', { list: L2, ask: 5, ...textNext(L2) }),
       ex('Ví dụ 3 · Tìm số thứ 7 🎯', { list: L3, ask: 7, ...textNth(L3, 7) }),
+      growQ({ title: 'Ví dụ 4 · Bước nhảy tăng dần 📈', list: [1, 2, 4, 7, 11] }),
+      mixQ({ title: 'Ví dụ 5 · Hai dãy xen kẽ 🟣🟠', list: [1, 10, 2, 8, 3, 6] }),
     ],
     gen,
     test: [
@@ -104,10 +147,21 @@
       seqQ({ src: 'Đề 1 · Câu 8', list: T[1], ask: 6, answer: 25, ...textNext(T[1]) }),
       seqQ({ src: 'VQG 2024–2025 · Câu 1', list: T[3], ask: 7, answer: 29, ...textNext(T[3]) }),
       seqQ({ src: 'Giống câu 4 – Mock 2025', list: T[5], ask: 5, answer: 23, ...textBlank(T[5]) }),
-      seqQ({ src: 'Giống đề TIMO', list: T[7], ask: 3, answer: 50, ...textBlank(T[7]) }),
       seqQ({ src: 'Giống câu 14 – Mock 2025', list: T[6], ask: 7, answer: 30, ...textNth(T[6], 7) }),
       seqQ({ src: 'Đề 1 · Câu 9', list: T[2], ask: 8, answer: 53, ...textNth(T[2], 8) }),
       seqQ({ src: 'VQG 2024–2025 · Câu 12', list: T[4], ask: 9, answer: 26, ...textNth(T[4], 9) }),
+      // Bổ sung: VQG 2025–2026 và phiếu luyện "Dãy số", "Dãy chữ, số"
+      seqQ({ src: 'VQG 2025–2026 · Câu 2', list: [19, 26, 33, 40, 47], ask: 6, answer: 54, ...textNext([19, 26, 33, 40, 47]) }),
+      seqQ({ src: 'VQG 2025–2026 · Câu 13', list: [91, 84, 77, 70], ask: 7, answer: 49, ...textNth([91, 84, 77, 70], 7) }),
+      seqQ({ src: 'Phiếu Dãy số · Bài 12', list: [58, 70, 82, 94, 106], ask: 6, answer: 118, ...textNext([58, 70, 82, 94, 106]) }),
+      growQ({ src: 'Phiếu Dãy số · Câu 3', list: [1, 3, 7, 13, 21], answer: 31 }),
+      growQ({ src: 'Phiếu Dãy số · Câu 4', list: [5, 6, 9, 14, 21], answer: 30 }),
+      growQ({ src: 'Phiếu Dãy số · Bài 15', list: [2, 4, 8, 14, 22, 32], answer: 44 }),
+      growQ({ src: 'Phiếu Dãy số · Bài 23', list: [8, 11, 16, 23, 32, 43], answer: 56 }),
+      mixQ({ src: 'Phiếu Dãy chữ, số · Câu 6', list: [2, 3, 5, 5, 8, 7, 11, 9], answer: 14 }),
+      mixQ({ src: 'Phiếu Dãy chữ, số · Câu 7', list: [19, 2, 17, 5, 15, 8], answer: 13 }),
+      mixQ({ src: 'Phiếu Dãy chữ, số · Câu 12', list: [4, 6, 9, 8, 14, 10, 19, 12], answer: 24 }),
+      mixQ({ src: 'Phiếu Dãy chữ, số · Câu 19', list: [18, 4, 15, 8, 12, 12, 9, 16], answer: 6 }),
     ],
   });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -13,7 +13,7 @@ let fails = 0, checks = 0;
 function ok(cond, msg) { checks++; if (!cond) { fails++; console.log('  ✗ ' + msg); } }
 const norm = v => String(v).trim().toUpperCase();
 const textOf = s => (typeof s === 'string' ? s : s.text);
-const TYPES = ['num', 'letter', 'oddeven', 'choice'];
+const TYPES = ['num', 'letter', 'oddeven', 'choice', 'word', 'signs'];
 
 // Một câu hỏi hợp lệ: có đề, đáp án đúng kiểu, máy tự tính ra cùng đáp án, bước cuối có 🎉 và đáp án
 function checkQ(q, where) {
@@ -24,11 +24,16 @@ function checkQ(q, where) {
   if (q.type === 'num') ok(Number.isInteger(Number(q.answer)) && Number(q.answer) >= 0, `${where}: đáp án số phải là số tự nhiên (${q.answer})`);
   if (q.type === 'letter') ok(/^[A-Z]$/.test(q.answer), `${where}: đáp án chữ phải là 1 chữ in hoa (${q.answer})`);
   if (q.type === 'oddeven') ok(['even', 'odd'].includes(q.answer), `${where}: đáp án chẵn lẻ phải là even/odd`);
+  if (q.type === 'word') ok(/^[A-Z]+$/.test(q.answer), `${where}: đáp án mật mã phải là chữ in hoa (${q.answer})`);
+  if (q.type === 'signs') {
+    ok(typeof q.check === 'function' && q.check(q.answer), `${where}: dấu ${q.answer} không ra đúng kết quả`);
+    (q.wrong || []).forEach(w => ok(!q.check(w), `${where}: lựa chọn sai ${w} lại ra đúng kết quả`));
+  }
   if (q.type === 'choice') ok((q.choices || []).some(c => norm(c.value) === norm(q.answer)), `${where}: đáp án không có trong các lựa chọn`);
   ok(Array.isArray(q.steps) && q.steps.length >= 2, `${where}: cần ít nhất 2 bước giải`);
   const last = textOf(q.steps[q.steps.length - 1]) || '';
   ok(last.includes('🎉'), `${where}: bước cuối phải là đáp án 🎉`);
-  if (q.type === 'num' || q.type === 'letter') ok(last.includes(String(q.answer)), `${where}: bước cuối không nhắc đáp án ${q.answer}`);
+  if (['num', 'letter', 'word'].includes(q.type)) ok(last.includes(String(q.answer)), `${where}: bước cuối không nhắc đáp án ${q.answer}`);
   q.steps.forEach((s, i) => ok(typeof textOf(s) === 'string' && textOf(s).length > 3, `${where}: bước ${i + 1} trống`));
 }
 
@@ -56,6 +61,7 @@ D.TEST_DATE.forEach((q, i) => {
   ok(steps[steps.length - 1].includes(D.DAYS[a].en), `Bài 4 câu ${i + 1}: lời giải không ra ${D.DAYS[a].en}`);
 });
 ok(D.answerOf(D.TEST_DATE[0]) === 0, 'Bài 4 câu 1 (Mock 2025 · Câu 3) phải ra thứ Hai');
+D.TEST_DATE.forEach((q, i) => { if (q.expect) ok(D.DAYS[D.answerOf(q)].en === q.expect, `Bài 4 câu ${i + 1}: máy tính ra ${D.DAYS[D.answerOf(q)].en}, đáp án ghi tay ${q.expect}`); });
 D.TEST_AGE.forEach((q, i) => checkQ(q, `Bài 5 câu ${i + 1}`));
 
 console.log(fails ? `\n❌ ${fails}/${checks} kiểm tra bị lỗi` : `\n✅ Tất cả ${checks} kiểm tra đều đúng`);

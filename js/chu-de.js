@@ -38,6 +38,8 @@
   function choicesOf(q) {
     if (q.type === 'oddeven') return TV.ODD_EVEN;
     if (q.type === 'choice') return shuffle(q.choices);
+    if (q.type === 'signs') return shuffle([q.answer, ...q.wrong]).map(v => ({ value: v, html: `<b class="small-eq">${esc(TV.signsText(q, v))}</b>` }));
+    if (q.type === 'word') return shuffle([q.answer, ...q.wrong].slice(0, 3)).map(v => ({ value: v, html: `<b>${esc(v)}</b>` }));
     const near = q.type === 'letter'
       ? [1, -1, 2, -2].map(d => ABC[ABC.indexOf(q.answer) + d])
       : [1, -1, 2, 10].map(d => q.answer + d);
