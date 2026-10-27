@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TIMO Vui Học</title>
+  <meta name="theme-color" content="#7048e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+
+  <main class="wrap">
+    <section class="hero card">
+      <div class="zb float" data-zoombe="happy"></div>
+      <div>
+        <h1 class="say">Chào con! Tớ là Zoombe!</h1>
+        <p class="say">Mình cùng ôn thi TIMO theo từng dạng toán nhé!</p>
+        <p class="say">Làm đúng sẽ được ⭐. Sao dùng để mở sticker và đổi quà đó!</p>
+        <p class="tip">👆 Bấm vào chữ có 🔊 để nghe Zoombe đọc.</p>
+      </div>
+    </section>
+
+    <div id="parts"></div>
+
+    <h2 class="section-title">🎁 Phần thưởng</h2>
+    <div class="islands">
+      <a class="island" href="doi-qua.html" style="--c:#e6a700">
+        <span class="isl-icon">🎁</span><span class="isl-tag">Đổi quà</span>
+        <b>Cửa hàng quà</b><small id="giftHint">Dùng ⭐ để đổi quà thật</small>
+      </a>
+      <a class="island" href="album.html" style="--c:#e6a700">
+        <span class="isl-icon">🦁</span><span class="isl-tag">Sticker</span>
+        <b>Album sticker</b><small id="albumHint">Xem sticker con đã có</small>
+      </a>
+    </div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/topics/chu-cai.js"></script>
+  <script src="js/topics/tinh-nhanh.js"></script>
+  <script src="js/topics/tim-so.js"></script>
+  <script src="js/topics/day-so.js"></script>
+  <script src="js/topics/chan-le.js"></script>
+  <script>
+    (function () {
+      const { esc } = TV, st = TV.getState();
+      // Tiến độ bài tự làm: số câu đúng cao nhất / tổng số câu
+      const badge = (testId, n) => {
+        const t = st.tests[testId];
+        return t && t.done ? `<span class="isl-score">📝 ${t.best}/${n}${t.best === n ? ' 🏆' : ''}</span>` : `<span class="isl-score todo">📝 ${n} câu tự làm</span>`;
+      };
+      const card = (c, part) => `<a class="island" href="${c.href}" style="--c:${part.color}">
+          <span class="isl-icon">${c.icon}</span><b>${esc(c.title)}</b><small>${esc(c.sub)}</small>${badge(c.test, c.n)}</a>`;
+      const topics = window.TVTopics || [];
+      document.getElementById('parts').innerHTML = TVData.PARTS.map(p => {
+        const cards = TVData.LINKS.filter(l => l.part === p.id)
+          .concat(topics.filter(t => t.part === p.id).map(t => ({ href: `chu-de.html?id=${t.id}`, icon: t.icon, title: t.title, sub: t.sub, test: `${t.id}-test`, n: t.test.length })));
+        return `<section class="part" style="--c:${p.color}">
+            <h2 class="part-title"><span class="part-icon">${p.icon}</span> ${p.id}. ${p.vi} <small>${p.en}</small></h2>
+            ${cards.length ? `<div class="islands">${cards.map(c => card(c, p)).join('')}</div>` : ''}
+            <p class="soon">🔒 Sắp có: ${esc(p.soon)}</p>
+          </section>`;
+      }).join('');
+      if (st.stickers) document.getElementById('albumHint').textContent = `Con đã có ${st.stickers} sticker!`;
+      document.getElementById('giftHint').textContent = `Con đang có ${TV.available()} ⭐ để đổi quà`;
+    })();
+  </script>
+</body>
+</html>

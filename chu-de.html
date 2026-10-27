@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bài học</title>
+  <meta name="theme-color" content="#7048e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+
+  <main class="wrap" id="main">
+    <section class="card">
+      <div class="guide">
+        <div class="zb float" data-zoombe="happy"></div>
+        <div class="bubble say" id="tIntro"></div>
+      </div>
+    </section>
+
+    <nav class="tabs" id="tabs">
+      <button data-tab="hoc-tu">📖 Học từ</button>
+      <button data-tab="vi-du">🧩 Ví dụ</button>
+      <button data-tab="luyen-tap">🎮 Luyện tập</button>
+      <button data-tab="bai-tu-lam">📝 Bài tự làm</button>
+    </nav>
+
+    <!-- 1. Học từ -->
+    <section class="panel" id="hoc-tu">
+      <div class="card">
+        <h2>📖 Từ vựng tiếng Anh</h2>
+        <p class="tip">👆 Bấm vào thẻ để nghe tiếng Anh và tiếng Việt.</p>
+        <div class="word-grid" id="tWords"></div>
+      </div>
+      <div class="card">
+        <h2>🪄 Bí kíp làm bài</h2>
+        <ol class="method-list" id="tTips"></ol>
+      </div>
+      <div class="card" id="tPlayCard" hidden>
+        <h2 id="tPlayTitle"></h2>
+        <div id="tPlay"></div>
+      </div>
+      <div class="next-row"><button class="btn btn-big" data-goto="vi-du">Tiếp theo: Xem ví dụ ➡️</button></div>
+    </section>
+
+    <!-- 2. Ví dụ -->
+    <section class="panel" id="vi-du">
+      <p class="tip center">👆 Bấm "Tiếp theo" để Zoombe giải từng bước.</p>
+      <div id="tExamples"></div>
+      <div class="next-row"><button class="btn btn-big" data-goto="luyen-tap">Tiếp theo: Luyện tập ➡️</button></div>
+    </section>
+
+    <!-- 3. Luyện tập -->
+    <section class="panel" id="luyen-tap">
+      <div class="card">
+        <h2>🎮 Luyện tập</h2>
+        <p class="say">Chọn đáp án đúng. Sai thì thử lại, hoặc bấm Gợi ý nhé!</p>
+        <div id="tPractice"></div>
+      </div>
+      <div class="next-row"><button class="btn btn-big" data-goto="bai-tu-lam">Tiếp theo: Bài tự làm ➡️</button></div>
+    </section>
+
+    <!-- 4. Bài tự làm -->
+    <section class="panel" id="bai-tu-lam">
+      <div class="card">
+        <h2>📝 Bài tự làm</h2>
+        <p class="say">Câu giống đề thi TIMO. Con tự làm hết rồi bấm Nộp bài. Nộp xong mới xem đáp án nhé!</p>
+        <div id="tTest"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/visuals.js"></script>
+  <script src="js/topics/chu-cai.js"></script>
+  <script src="js/topics/tinh-nhanh.js"></script>
+  <script src="js/topics/tim-so.js"></script>
+  <script src="js/topics/day-so.js"></script>
+  <script src="js/topics/chan-le.js"></script>
+  <script src="js/chu-de.js"></script>
+</body>
+</html>

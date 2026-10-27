@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thứ Ngày Tháng</title>
+  <meta name="theme-color" content="#7048e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="guide">
+        <div class="zb float" data-zoombe="happy"></div>
+        <div class="bubble say">Bài 4: Thứ, ngày, tháng. Zoombe sẽ nhảy qua các ngày cùng con nhé!</div>
+      </div>
+    </section>
+
+    <nav class="tabs" id="tabs">
+      <button data-tab="hoc-tu">📖 Học từ</button>
+      <button data-tab="nhay">🧟 Zoombe nhảy</button>
+      <button data-tab="vi-du">🧩 Ví dụ</button>
+      <button data-tab="game">🎮 Game</button>
+      <button data-tab="thu-thach">🏆 Thử thách TIMO</button>
+      <button data-tab="bai-tu-lam">📝 Bài tự làm</button>
+    </nav>
+
+    <!-- 1. Học từ -->
+    <section class="panel" id="hoc-tu">
+      <div class="card">
+        <h2>📅 7 ngày trong tuần</h2>
+        <p class="tip">👆 Bấm vào thẻ để nghe tiếng Anh và tiếng Việt.</p>
+        <div class="word-grid" id="dayCards"></div>
+      </div>
+      <div class="card">
+        <h2>🔑 Từ khóa siêu quan trọng</h2>
+        <div class="key-grid">
+          <div class="key fwd" data-en="later. after." data-vi="Sau, nữa. Là đi tới.">
+            <span class="key-arrow">➡️</span><b>later / after</b><span>sau · nữa → <b>đi tới</b></span>
+          </div>
+          <div class="key back" data-en="ago. before." data-vi="Trước. Là lùi lại.">
+            <span class="key-arrow">⬅️</span><b>ago / before</b><span>trước → <b>lùi lại</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>⏰ Từ về thời gian</h2>
+        <div class="word-grid" id="timeWords"></div>
+      </div>
+      <div class="card">
+        <h2>🗓️ 12 tháng trong năm</h2>
+        <div class="word-grid small" id="monthCards"></div>
+      </div>
+      <div class="next-row"><button class="btn btn-big" data-goto="nhay">Tiếp theo: Zoombe nhảy ➡️</button></div>
+    </section>
+
+    <!-- 2. Zoombe nhảy -->
+    <section class="panel" id="nhay">
+      <div class="card">
+        <h2>🛤️ Con đường 5 ngày</h2>
+        <p class="say">Chọn hôm nay là thứ mấy. Rồi bấm vào từng ô xem Zoombe nhảy nhé.</p>
+        <p class="real-day say" id="realDay"></p>
+        <div class="chip-row" id="todayPick"></div>
+        <div class="timeline" id="timeline"></div>
+        <div class="legend"><span class="fwd-t">➡️ Sang phải: +1 ngày</span><span class="back-t">⬅️ Sang trái: −1 ngày</span></div>
+      </div>
+      <div class="card">
+        <h2>🎡 Vòng tròn 7 ngày</h2>
+        <p class="say">Bấm vào một ngày để Zoombe đứng đó. Rồi bấm Tới hoặc Lùi để nhảy.</p>
+        <div id="wheelPlay"></div>
+        <div class="magic"><span class="say">✨ Mẹo siêu nhân: nhảy 7 bước là về đúng chỗ cũ!</span></div>
+      </div>
+      <div class="next-row"><button class="btn btn-big" data-goto="vi-du">Tiếp theo: Xem ví dụ ➡️</button></div>
+    </section>
+
+    <!-- 3. Ví dụ -->
+    <section class="panel" id="vi-du">
+      <div class="card">
+        <h2>🪄 3 bước làm bài</h2>
+        <ol class="method-list">
+          <li class="say">🏠 Bước 1: Tìm xem <b>hôm nay</b> là thứ mấy.</li>
+          <li class="say">➡️ Bước 2: Xem đề bảo <b class="fwd-t">đi tới</b> (later) hay <b class="back-t">lùi lại</b> (ago).</li>
+          <li class="say">🧟 Bước 3: Cho Zoombe nhảy và đếm từng bước.</li>
+        </ol>
+      </div>
+      <div class="card example">
+        <h3>Ví dụ 1 · Đi tới ➡️</h3>
+        <p class="q-en say" data-lang="en">Today is Thursday. Which day of the week will it be 3 days later?</p>
+        <p class="say">Hôm nay là thứ Năm. Hỏi 3 ngày nữa là thứ mấy?</p>
+        <div class="ex-layout"><div id="ex1Wheel"></div><div id="ex1Steps"></div></div>
+      </div>
+      <div class="card example">
+        <h3>Ví dụ 2 · Lùi lại ⬅️</h3>
+        <p class="q-en say" data-lang="en">Tomorrow will be Friday. Which day of the week was it 3 days before (from today)?</p>
+        <p class="say">Ngày mai là thứ Sáu. Hỏi 3 ngày trước (tính từ hôm nay) là thứ mấy?</p>
+        <div class="ex-layout"><div id="ex2Wheel"></div><div id="ex2Steps"></div></div>
+      </div>
+      <div class="card example">
+        <h3>Ví dụ 3 · Mẹo 7 bước ✨</h3>
+        <p class="q-en say" data-lang="en">Today is Monday. Which day of the week was it 8 days ago?</p>
+        <p class="say">Hôm nay là thứ Hai. Hỏi 8 ngày trước là thứ mấy?</p>
+        <div class="ex-layout"><div id="ex3Wheel"></div><div id="ex3Steps"></div></div>
+      </div>
+      <div class="next-row"><button class="btn btn-big" data-goto="game">Tiếp theo: Chơi game ➡️</button></div>
+    </section>
+
+    <!-- 4. Game -->
+    <section class="panel" id="game">
+      <div class="card">
+        <h2>🧟 Game: Zoombe nhảy ngày</h2>
+        <p class="say">Chọn mức chơi nhé!</p>
+        <div class="chip-row" id="lvlPick">
+          <button class="chip-btn active" data-lvl="1">🌱 Dễ</button>
+          <button class="chip-btn" data-lvl="2">🌿 Vừa</button>
+          <button class="chip-btn" data-lvl="3">🌳 Khó</button>
+        </div>
+        <div id="dayGame"></div>
+      </div>
+      <div class="card">
+        <h2>🃏 Game: Lật thẻ ghép đôi</h2>
+        <div id="memDate"></div>
+      </div>
+      <div class="next-row"><button class="btn btn-big" data-goto="thu-thach">Tiếp theo: Thử thách TIMO ➡️</button></div>
+    </section>
+
+    <!-- 5. Thử thách TIMO -->
+    <section class="panel" id="thu-thach">
+      <div class="card">
+        <h2>🏆 Bài tập trong sách</h2>
+        <p class="say">7 câu giống đề thi TIMO. Con làm được mà!</p>
+        <div id="bookDate"></div>
+      </div>
+      <div class="next-row"><button class="btn btn-big" data-goto="bai-tu-lam">Tiếp theo: Bài tự làm ➡️</button></div>
+    </section>
+
+    <!-- 6. Bài tự làm -->
+    <section class="panel" id="bai-tu-lam">
+      <div class="card">
+        <h2>📝 Bài tự làm</h2>
+        <p class="say">Câu giống đề thi TIMO. Con tự làm hết rồi bấm Nộp bài. Nộp xong mới xem đáp án nhé!</p>
+        <div id="testDate"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/thu-ngay.js"></script>
+</body>
+</html>

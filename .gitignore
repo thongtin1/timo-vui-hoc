@@ -1,0 +1,5 @@
+# Tài liệu PDF gốc có bản quyền – không đưa lên GitHub công khai
+doc/
+node_modules/
+.DS_Store
+Thumbs.db

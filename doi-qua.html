@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đổi Quà</title>
+  <meta name="theme-color" content="#7048e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="guide">
+        <div class="zb float" data-zoombe="party"></div>
+        <div class="bubble say" id="giftTalk"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🎁 Chọn quà</h2>
+      <p class="tip">👆 Đủ sao thì bấm "Đổi quà", rồi nhờ bố mẹ trao quà cho con nhé.</p>
+      <div class="gift-grid" id="gifts"></div>
+    </section>
+
+    <section class="card">
+      <h2>📜 Quà con đã đổi</h2>
+      <div id="history"></div>
+    </section>
+
+    <section class="card">
+      <h2>👨‍👩‍👧 Bố mẹ cài đặt quà</h2>
+      <div id="parent"></div>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/doi-qua.js"></script>
+</body>
+</html>

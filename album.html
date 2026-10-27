@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Album Sticker</title>
+  <meta name="theme-color" content="#7048e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="guide">
+        <div class="zb float" data-zoombe="party"></div>
+        <div class="bubble say" id="albumTalk"></div>
+      </div>
+      <div class="progress"><div class="progress-bar" id="nextBar"></div></div>
+      <p class="say" id="nextText"></p>
+    </section>
+
+    <section class="card">
+      <h2>🎁 Album sticker</h2>
+      <div class="sticker-grid" id="stickers"></div>
+    </section>
+
+    <section class="card">
+      <h2>👨‍👩‍👧 Góc phụ huynh</h2>
+      <h3>📈 Kết quả của bé</h3>
+      <div class="table-wrap" id="report"></div>
+      <h3 style="margin-top:18px">🔊 Giọng đọc</h3>
+      <p id="voiceInfo"></p>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn btn-ghost" id="testVoice">Thử giọng đọc</button>
+      </div>
+      <h3 style="margin-top:18px">🧹 Xóa tiến độ</h3>
+      <p class="muted">Tiến độ chỉ lưu trong trình duyệt của máy này.</p>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn btn-danger" id="resetAll">Xóa hết sao, sticker và kết quả</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/topics/chu-cai.js"></script>
+  <script src="js/topics/tinh-nhanh.js"></script>
+  <script src="js/topics/tim-so.js"></script>
+  <script src="js/topics/day-so.js"></script>
+  <script src="js/topics/chan-le.js"></script>
+  <script src="js/album.js"></script>
+</body>
+</html>
