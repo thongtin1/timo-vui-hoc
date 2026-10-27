@@ -89,21 +89,34 @@
       : t.replace(/\+/g, ' cộng ').replace(/−/g, ' trừ ').replace(/=/g, ' bằng ');
     return t.replace(/\s+/g, ' ').trim();
   }
-  function speakAll(parts) {
+  // onDone?() được gọi khi đọc xong. Máy không có giọng đọc, hoặc không báo đọc xong,
+  // thì tự gọi sau thời gian đọc ước lượng. Luôn chờ ít nhất 1,2 giây để bé kịp nhìn.
+  function speakAll(parts, onDone) {
+    const texts = parts.map(p => ({ ...p, text: clean(p.text, p.lang) })).filter(p => p.text);
+    const est = Math.min(12000, Math.max(1200, texts.reduce((a, p) => a + p.text.length, 0) * 70));
+    const t0 = Date.now();
+    let finished = false, guard = null;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(guard);
+      if (onDone) setTimeout(onDone, Math.max(0, 1200 - (Date.now() - t0)));
+    };
+    if (onDone) guard = setTimeout(done, ('speechSynthesis' in window ? est + 4000 : est));
     if (!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
-    parts.forEach(p => {
-      const text = clean(p.text, p.lang);
-      if (!text) return;
-      const u = new SpeechSynthesisUtterance(text);
+    if (!texts.length) { done(); return; }
+    texts.forEach((p, i) => {
+      const u = new SpeechSynthesisUtterance(p.text);
       u.lang = p.lang === 'en' ? 'en-US' : 'vi-VN';
       const v = pickVoice(u.lang);
       if (v) u.voice = v;
       u.rate = p.lang === 'en' ? 0.85 : 0.95;
+      if (i === texts.length - 1) { u.onend = done; u.onerror = done; }
       speechSynthesis.speak(u);
     });
   }
-  const say = (text, lang) => speakAll([{ text, lang: lang || 'vi' }]);
+  const say = (text, lang, onDone) => speakAll([{ text, lang: lang || 'vi' }], onDone);
   function voiceInfo() {
     return { supported: 'speechSynthesis' in window, vi: pickVoice('vi-VN'), en: pickVoice('en-US') };
   }
@@ -270,12 +283,24 @@
   }
 
   // ---------- Ví dụ từng bước ----------
-  // list: [{ text, run?, cls? }] – mỗi lần bấm "Tiếp theo" hiện thêm 1 bước
+  // list: [{ text, run?, cls? }] – mỗi lần bấm "Tiếp theo" hiện thêm 1 bước.
+  // Zoombe đọc xong bước đang hiện thì nút "Tiếp theo" mới bấm được, để bé nghe hết rồi mới sang bước sau.
   function steps(el, list, opts) {
     opts = opts || {};
-    el.innerHTML = '<ol class="step-list"></ol><div class="btn-row"><button class="btn btn-big step-next">Tiếp theo ▶</button><button class="btn btn-ghost step-again">↺ Làm lại</button></div>';
+    el.innerHTML = '<ol class="step-list"></ol><div class="btn-row"><button class="btn btn-big step-next"></button><button class="btn btn-ghost step-again">↺ Làm lại</button></div>';
     const ol = $('ol', el), next = $('.step-next', el);
-    let i = 0;
+    let i = 0, started = false, token = 0;
+    const NEXT = 'Tiếp theo ▶';
+    // Đọc bước đang hiện; trong lúc đọc khoá nút "Tiếp theo"
+    function read(li) {
+      const my = ++token;
+      if (i < list.length) { next.disabled = true; next.textContent = '🔊 Zoombe đang đọc…'; }
+      say(li.textContent, 'vi', () => {
+        if (my !== token || i >= list.length) return;
+        next.disabled = false;
+        next.textContent = NEXT;
+      });
+    }
     function show(silent) {
       const s = list[i++];
       $$('li', ol).forEach(li => li.classList.remove('current'));
@@ -284,22 +309,28 @@
       li.innerHTML = s.text;
       ol.appendChild(li);
       if (s.run) s.run();
-      if (!silent) say(li.textContent);
       if (i >= list.length) {
         next.disabled = true;
         next.textContent = 'Xong rồi! 🎉';
         if (!silent) { confetti(40); sfx.ting(); }
       }
+      if (!silent) read(li);
     }
     function reset(silent) {
+      token++;
       ol.innerHTML = '';
       i = 0;
+      started = !silent;
       next.disabled = false;
-      next.textContent = 'Tiếp theo ▶';
+      // Lúc mới mở trang chưa đọc gì (trình duyệt chỉ cho đọc sau khi bé bấm): nút đầu tiên là "Bắt đầu nghe"
+      next.textContent = silent ? '🔊 Bắt đầu nghe' : NEXT;
       if (opts.onReset) opts.onReset();
       show(silent);
     }
-    next.addEventListener('click', () => show(false));
+    next.addEventListener('click', () => {
+      if (!started) { started = true; read($('li.current', ol)); return; }
+      show(false);
+    });
     $('.step-again', el).addEventListener('click', () => reset(false));
     reset(true);
   }
