@@ -12,8 +12,9 @@
   // ---------- Lưu tiến độ (chỉ trong trình duyệt này) ----------
   const KEY = 'timo-vui-hoc-v1';
   // marks[lessonId][câu] = 'ok' (đúng ngay lần đầu) | 'retry' (đúng sau khi thử lại)
-  // tests[lessonId] = { ans, done, got, score, best } – bài tự làm; spent = số sao đã đổi quà
-  const fresh = () => ({ stars: 0, stickers: 0, log: {}, marks: {}, tests: {}, spent: 0, rewards: null, redeemed: [] });
+  // tests[lessonId] = { ans, done, got, score, best, miss } – bài tự làm; spent = số sao đã đổi quà
+  // seen[bài][i] = true – bé đã xem tới bước cuối của ví dụ i
+  const fresh = () => ({ stars: 0, stickers: 0, log: {}, marks: {}, tests: {}, seen: {}, spent: 0, rewards: null, redeemed: [] });
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
@@ -284,6 +285,7 @@
 
   // ---------- Ví dụ từng bước ----------
   // list: [{ text, run?, cls? }] – mỗi lần bấm "Tiếp theo" hiện thêm 1 bước.
+  // opts: { onReset?(), onDone?() – gọi khi bé xem tới bước cuối }
   // Zoombe đọc xong bước đang hiện thì nút "Tiếp theo" mới bấm được, để bé nghe hết rồi mới sang bước sau.
   function steps(el, list, opts) {
     opts = opts || {};
@@ -312,7 +314,7 @@
       if (i >= list.length) {
         next.disabled = true;
         next.textContent = 'Xong rồi! 🎉';
-        if (!silent) { confetti(40); sfx.ting(); }
+        if (!silent) { confetti(40); sfx.ting(); if (opts.onDone) opts.onDone(); }
       }
       if (!silent) read(li);
     }
@@ -339,8 +341,9 @@
   // cfg: { lessonId, total, get(i) → câu hỏi, visual?(box, q) → đồ dùng, onCorrect?(đồ dùng, q),
   //        picker? – hiện hàng nút số để bé tự chọn câu, nhớ câu đã làm,
   //        stars? – được cộng ⭐ (chỉ dùng cho Thử thách TIMO; luyện tập và game không có sao).
-  //                 Chỉ câu đúng ngay lần đầu mới được ⭐; câu đã chọn sai thì làm lại không được sao nữa }
-  // câu hỏi: { en?, vi, tag?, choices: [{ value, html }], answer, steps: [html], hint? }
+  //                 Chỉ câu đúng ngay lần đầu mới được ⭐; câu đã làm sai thì làm lại không được sao nữa,
+  //        fill? – bé tự điền kết quả bằng ô điền của Bài tự làm (câu cần type) rồi bấm Kiểm tra }
+  // câu hỏi: { en?, vi, tag?, type?, choices: [{ value, html }], answer, steps: [html], hint? }
   const CHEER_OK = ['Đúng rồi! Con giỏi quá!', 'Tuyệt vời! Zoombe nhảy cẫng lên nè!', 'Chính xác! Con là siêu sao!', 'Hoan hô! Đúng rồi nha!'];
   const CHEER_TRY = ['Gần đúng rồi! Mình thử lại nhé!', 'Không sao đâu! Bấm Gợi ý xem nha.', 'Zoombe tin con làm được! Thử lần nữa nào!'];
 
@@ -387,8 +390,8 @@
           ${q.en ? `<p class="q-en say" data-lang="en">${esc(q.en)}</p>` : ''}
           <p class="q-vi say">${esc(q.vi)}</p>
           <div class="q-visual"></div>
-          <div class="choices"></div>
-          <div class="guide guide-sm"><div class="zb" data-zoombe="think"></div><div class="bubble">Con chọn đáp án đúng nhé!</div></div>
+          <div class="${cfg.fill ? 'ans-area' : 'choices'}"></div>
+          <div class="guide guide-sm"><div class="zb" data-zoombe="think"></div><div class="bubble">${cfg.fill ? 'Con tính rồi điền kết quả, bấm Kiểm tra nhé!' : 'Con chọn đáp án đúng nhé!'}</div></div>
           <ol class="q-hint step-list"></ol>
           <div class="btn-row">
             <button class="btn btn-ghost q-hint-btn">💡 Gợi ý</button>
@@ -398,7 +401,7 @@
       mountZoombe(el);
       bindPicker();
       const guide = $('.guide', el), hint = $('.q-hint', el), hintBtn = $('.q-hint-btn', el);
-      const nextBtn = $('.q-next', el), box = $('.choices', el);
+      const nextBtn = $('.q-next', el), box = $(cfg.fill ? '.ans-area' : '.choices', el);
       const tool = cfg.visual ? cfg.visual($('.q-visual', el), q) : null;
 
       function addStep() {
@@ -414,43 +417,69 @@
         if (shown >= hintMax) hintBtn.disabled = true;
       });
 
-      q.choices.forEach(c => {
-        const b = document.createElement('button');
-        b.className = 'choice';
-        b.innerHTML = c.html;
-        b.addEventListener('click', () => {
+      function win() {
+        done = true;
+        // Chỉ quiz có cfg.stars (Thử thách TIMO) mới cộng sao: đúng ngay lần đầu, mỗi câu 1 lần.
+        // Câu đã từng làm sai (kể cả lần làm trước) thì làm lại không được sao.
+        const already = cfg.picker && marks()[idx];
+        const got = cfg.stars && !already && tries === 0 ? 2 : 0;
+        if (tries === 0) firstTry++;
+        record(cfg.lessonId, q.vi, tries === 0);
+        mark(tries === 0 ? 'ok' : 'retry');
+        sfx.ting();
+        confetti(40);
+        const cheer = pick(CHEER_OK);
+        talk(guide, got ? `${cheer} <b>+${got} ⭐</b>` : cheer, 'party', cheer);
+        while (shown < q.steps.length) addStep();
+        hintBtn.disabled = true;
+        nextBtn.hidden = false;
+        if (got) addStars(got);
+        if (cfg.onCorrect) cfg.onCorrect(tool, q);
+      }
+      function lose() {
+        tries++;
+        mark('bad');
+        sfx.oops();
+        talk(guide, cfg.stars ? 'Chưa đúng rồi! Con làm lại nhé, lần này không có ⭐ nữa đâu.' : pick(CHEER_TRY), 'oops');
+      }
+
+      if (cfg.fill) {
+        // Thử thách TIMO: bé tự điền kết quả (bàn phím số / 7 thứ) rồi bấm Kiểm tra, không có sẵn 3 đáp án để chọn
+        let draft = '';
+        const checkBtn = document.createElement('button');
+        checkBtn.className = 'btn btn-big q-check';
+        checkBtn.textContent = '✅ Kiểm tra';
+        hintBtn.before(checkBtn);
+        answerPad(box, q, '', v => { draft = v; });
+        checkBtn.addEventListener('click', () => {
           if (done) return;
-          if (c.value === q.answer) {
-            done = true;
-            b.classList.add('right');
-            $$('.choice', box).forEach(x => { x.disabled = true; });
-            // Chỉ quiz có cfg.stars (Thử thách TIMO) mới cộng sao: đúng ngay lần đầu, mỗi câu 1 lần.
-            // Câu đã từng chọn sai (kể cả lần làm trước) thì làm lại không được sao.
-            const already = cfg.picker && marks()[idx];
-            const got = cfg.stars && !already && tries === 0 ? 2 : 0;
-            if (tries === 0) firstTry++;
-            record(cfg.lessonId, q.vi, tries === 0);
-            mark(tries === 0 ? 'ok' : 'retry');
-            sfx.ting();
-            confetti(40);
-            const cheer = pick(CHEER_OK);
-            talk(guide, got ? `${cheer} <b>+${got} ⭐</b>` : cheer, 'party', cheer);
-            while (shown < q.steps.length) addStep();
-            hintBtn.disabled = true;
-            nextBtn.hidden = false;
-            if (got) addStars(got);
-            if (cfg.onCorrect) cfg.onCorrect(tool, q);
-          } else {
-            tries++;
-            b.classList.add('wrong');
-            b.disabled = true;
-            mark('bad');
-            sfx.oops();
-            talk(guide, pick(CHEER_TRY), 'oops');
-          }
+          if (!filled(draft)) { talk(guide, 'Con điền đáp án trước nhé!', 'think'); return; }
+          if (isRight(q, draft)) {
+            checkBtn.hidden = true;
+            $$('button', box).forEach(x => { x.disabled = true; });
+            win();
+          } else lose();
         });
-        box.appendChild(b);
-      });
+      } else {
+        q.choices.forEach(c => {
+          const b = document.createElement('button');
+          b.className = 'choice';
+          b.innerHTML = c.html;
+          b.addEventListener('click', () => {
+            if (done) return;
+            if (c.value === q.answer) {
+              b.classList.add('right');
+              $$('.choice', box).forEach(x => { x.disabled = true; });
+              win();
+            } else {
+              b.classList.add('wrong');
+              b.disabled = true;
+              lose();
+            }
+          });
+          box.appendChild(b);
+        });
+      }
 
       nextBtn.addEventListener('click', () => {
         idx++;
@@ -481,14 +510,53 @@
   // ---------- Lời giải từng bước có hình ----------
   // Bước giải: html hoặc { text, run?(đồ dùng), cls? }. Bước có 🎉 được tô xanh (đáp án).
   // Mỗi lần "Làm lại", hình được vẽ lại từ đầu bằng q.visual(box).
-  function solve(stepsEl, q, box) {
+  function solve(stepsEl, q, box, onDone) {
     let tool = null;
     const list = q.steps.map(s => (typeof s === 'string' ? { text: s } : s)).map(s => ({
       text: s.text,
       cls: s.cls || (/🎉/.test(s.text) ? 'answer' : ''),
       run: s.run ? () => s.run(tool) : null,
     }));
-    steps(stepsEl, list, { onReset: () => { if (q.visual && box) tool = q.visual(box); } });
+    steps(stepsEl, list, { onReset: () => { if (q.visual && box) tool = q.visual(box); }, onDone });
+  }
+
+  // ---------- Xem hết ví dụ mới được làm bài ----------
+  // key: mã bài, n: số ví dụ, targets: các ô bài làm (Thử thách TIMO, Bài tự làm) bị khoá đến khi xem xong.
+  // Trả về done(i): gọi khi bé xem tới bước cuối của ví dụ i. Đã xem xong thì nhớ luôn, lần sau không khoá nữa.
+  function exampleGate(key, n, targets) {
+    const seen = state.seen[key] || (state.seen[key] = {});
+    const left = () => Array.from({ length: n }, (_, i) => seen[i]).filter(x => !x).length;
+    const notes = targets.map(t => {
+      const d = document.createElement('div');
+      d.className = 'lock-note';
+      t.before(d);
+      return d;
+    });
+    function paint() {
+      const k = left();
+      targets.forEach((t, j) => {
+        t.hidden = k > 0;
+        notes[j].hidden = k === 0;
+        if (k) {
+          notes[j].innerHTML = `<div class="zb" data-zoombe="think"></div>
+            <p class="say">🔒 Con xem hết ${n} ví dụ (bấm "Tiếp theo" tới bước cuối) rồi mới làm bài nhé! Còn <b>${k}</b> ví dụ nữa.</p>
+            <button class="btn btn-big">🧩 Đi xem ví dụ</button>`;
+          mountZoombe(notes[j]);
+        }
+      });
+    }
+    notes.forEach(d => d.addEventListener('click', e => {
+      if (!e.target.closest('.btn')) return;
+      const tab = $('[data-tab="vi-du"]');
+      if (tab) { tab.click(); $('#tabs').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }));
+    paint();
+    return i => {
+      if (seen[i]) return;
+      seen[i] = true;
+      save();
+      paint();
+    };
   }
 
   // ---------- Bài tự làm ----------
@@ -839,7 +907,7 @@
     sfx, confetti, modal, ask,
     STICKERS, STARS_PER_STICKER, addStars, record, resetAll, getState: () => state,
     available, getRewards, setRewards, redeem,
-    steps, solve, quiz, selfTest, memory, ODD_EVEN, signsText,
+    steps, solve, exampleGate, quiz, selfTest, memory, ODD_EVEN, signsText,
   };
 
   renderTopbar();

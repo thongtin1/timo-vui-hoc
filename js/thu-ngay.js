@@ -158,9 +158,11 @@
   makeWheel($('#wheelPlay'), { controls: true, seven: true, start: realToday });
 
   // ---------- Ví dụ từng bước ----------
+  // Xem hết 3 ví dụ mới được làm Thử thách TIMO và Bài tự làm
+  const seen = TV.exampleGate('ngay', 3, [$('#bookDate'), $('#testDate')]);
   function example(id, start, makeSteps) {
     const w = makeWheel($(`#${id}Wheel`), { locked: true, start });
-    TV.steps($(`#${id}Steps`), makeSteps(w), { onReset: () => w.reset(start) });
+    TV.steps($(`#${id}Steps`), makeSteps(w), { onReset: () => w.reset(start), onDone: () => seen(Number(id.slice(2)) - 1) }); // 'ex1' → ví dụ 0
   }
   const jump = (w, dir) => () => w.later(() => w.hop(dir, true));
 
@@ -228,7 +230,12 @@
     .concat(TIME_WORDS.slice(0, 5).map(w => ({ a: { text: w.en, lang: 'en' }, b: { text: w.vi, lang: 'vi' } })));
   TV.memory($('#memDate'), { lessonId: 'ngay-the', pairs, count: 6 });
 
-  TV.quiz($('#bookDate'), { lessonId: 'ngay-timo', total: BOOK_DATE.length, picker: true, stars: true, get: i => toQuiz(BOOK_DATE[i]), visual: wheelTool, onCorrect: replay });
+  // Thử thách TIMO: không gợi ý sẵn vài đáp án, bé tự tìm ra 1 trong 7 thứ
+  TV.quiz($('#bookDate'), {
+    lessonId: 'ngay-timo', total: BOOK_DATE.length, picker: true, stars: true, fill: true,
+    get: i => ({ ...toQuiz(BOOK_DATE[i]), type: 'choice', choices: DAYS.map((_, k) => ({ value: k, html: dayChoice(k) })) }),
+    visual: wheelTool, onCorrect: replay,
+  });
 
   // ---------- Bài tự làm: chọn 1 trong 7 thứ, nộp bài xong mới xem cách giải ----------
   TV.selfTest($('#testDate'), {

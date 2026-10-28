@@ -1,7 +1,7 @@
 /* Bài 5: Tính tuổi */
 (function () {
   'use strict';
-  const { AGE_WORDS, BOOK_AGE, genAge, shuffle } = window.TVData;
+  const { AGE_WORDS, BOOK_AGE, genAge } = window.TVData;
   const { $, esc } = TV;
   const PALETTE = ['#e64980', '#7950f2', '#228be6', '#40c057', '#fd7e14', '#e6a700'];
 
@@ -67,6 +67,8 @@
   $('#yearFwd').addEventListener('click', () => moveYear(1));
 
   // ---------- Ví dụ từng bước ----------
+  // Xem hết 2 ví dụ mới được làm Thử thách TIMO và Bài tự làm
+  const seen = TV.exampleGate('tuoi', 2, [$('#bookAge'), $('#testAge')]);
   const b1 = makeBars($('#ex1Bars'), 14);
   TV.steps($('#ex1Steps'), [
     { text: '👧 Lacie <b>8 tuổi</b>.', run: () => b1.render([{ ...LACIE, age: 8 }]) },
@@ -76,7 +78,7 @@
     },
     { text: '🧮 Tuổi chị: 8 + 3 = <b>11</b>.' },
     { text: '🎉 Đáp án: chị của Lacie <b>11 tuổi</b>!', cls: 'answer' },
-  ]);
+  ], { onDone: () => seen(0) });
 
   const HARRY = { name: 'Harry', emoji: '👦', color: '#228be6' };
   const BROTHER = { name: 'Anh', emoji: '🧑', color: '#40c057' };
@@ -102,7 +104,7 @@
     { text: '🧑 Bây giờ anh <b>16 tuổi</b>. Harry ít hơn anh 5 tuổi.', run: () => { stopGrow(); b2.update([11, 16]); } },
     { text: '🧮 Tuổi Harry: 16 − 5 = <b>11</b>.' },
     { text: '🎉 Đáp án: Harry <b>11 tuổi</b>!', cls: 'answer' },
-  ], { onReset: stopGrow });
+  ], { onReset: stopGrow, onDone: () => seen(1) });
 
   // ---------- Bánh sinh nhật ----------
   function cakeHtml(n) {
@@ -138,7 +140,8 @@
     total: BOOK_AGE.length,
     picker: true,
     stars: true,
-    get: i => toQuiz({ ...BOOK_AGE[i], choices: shuffle(BOOK_AGE[i].choices) }),
+    fill: true, // bé tự điền số tuổi, không chọn trong 3 đáp án
+    get: i => ({ ...BOOK_AGE[i], type: 'num' }),
     visual: cakeTool,
     onCorrect: lightAndBlow,
   });

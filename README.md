@@ -6,7 +6,7 @@ Web ôn thi TIMO lớp 1 theo từng dạng toán, cùng bạn Zoombe. Chạy ho
 1. **📖 Học từ** – thuật ngữ Anh–Việt, bấm để nghe đọc, kèm bí kíp làm bài.
 2. **🧩 Ví dụ** – bấm "Tiếp theo" để xem lời giải từng bước, hình chạy theo.
 3. **🎮 Luyện tập** – câu ngẫu nhiên, biết đúng sai ngay, có gợi ý.
-4. **📝 Bài tự làm** – câu lấy từ đề ôn TIMO. Làm hết rồi nộp bài. Câu đúng xem được cách giải; câu sai chỉ báo sai (không hiện đáp án) để bé làm lại.
+4. **📝 Bài tự làm** – câu lấy từ đề ôn TIMO, xem hết các ví dụ mới mở được (Thử thách TIMO cũng vậy). Làm hết rồi nộp bài. Câu đúng xem được cách giải; câu sai chỉ báo sai (không hiện đáp án) để bé làm lại.
 
 Chỉ **Bài tự làm** và **Thử thách TIMO** được cộng ⭐, và chỉ khi đúng ngay lần đầu. Câu đã làm sai thì làm lại đúng cũng không được sao.
 

@@ -31,7 +31,9 @@
       <p class="say">${esc(q.vi)}</p>
       <div class="${q.visual ? 'ex-layout' : ''}">${q.visual ? `<div class="q-visual" id="exV${i}"></div>` : ''}<div id="exS${i}"></div></div>
     </div>`).join('');
-  topic.examples.forEach((q, i) => TV.solve($(`#exS${i}`), q, $(`#exV${i}`)));
+  // Xem hết ví dụ mới được làm Bài tự làm
+  const seen = TV.exampleGate(id, topic.examples.length, [$('#tTest')]);
+  topic.examples.forEach((q, i) => TV.solve($(`#exS${i}`), q, $(`#exV${i}`), () => seen(i)));
 
   // ---------- Luyện tập: trắc nghiệm 3 lựa chọn, biết đúng sai ngay ----------
   const ABC = TV.vis.ABC;
