@@ -338,7 +338,8 @@
   // ---------- Quiz ----------
   // cfg: { lessonId, total, get(i) → câu hỏi, visual?(box, q) → đồ dùng, onCorrect?(đồ dùng, q),
   //        picker? – hiện hàng nút số để bé tự chọn câu, nhớ câu đã làm,
-  //        stars? – được cộng ⭐ (chỉ dùng cho Thử thách TIMO; luyện tập và game không có sao) }
+  //        stars? – được cộng ⭐ (chỉ dùng cho Thử thách TIMO; luyện tập và game không có sao).
+  //                 Chỉ câu đúng ngay lần đầu mới được ⭐; câu đã chọn sai thì làm lại không được sao nữa }
   // câu hỏi: { en?, vi, tag?, choices: [{ value, html }], answer, steps: [html], hint? }
   const CHEER_OK = ['Đúng rồi! Con giỏi quá!', 'Tuyệt vời! Zoombe nhảy cẫng lên nè!', 'Chính xác! Con là siêu sao!', 'Hoan hô! Đúng rồi nha!'];
   const CHEER_TRY = ['Gần đúng rồi! Mình thử lại nhé!', 'Không sao đâu! Bấm Gợi ý xem nha.', 'Zoombe tin con làm được! Thử lần nữa nào!'];
@@ -349,11 +350,11 @@
     const marks = () => state.marks[cfg.lessonId] || (state.marks[cfg.lessonId] = {});
     function numHtml(k) {
       const m = marks()[k];
-      return `<button class="q-num ${k === idx ? 'cur' : ''} ${m || ''}" data-k="${k}" aria-label="Câu ${k + 1}">${k + 1}${m === 'ok' ? '<i>⭐</i>' : m === 'retry' ? '<i>✓</i>' : ''}</button>`;
+      return `<button class="q-num ${k === idx ? 'cur' : ''} ${m || ''}" data-k="${k}" aria-label="Câu ${k + 1}">${k + 1}${m === 'ok' ? '<i>⭐</i>' : m === 'retry' ? '<i>✓</i>' : m === 'bad' ? '<i>✗</i>' : ''}</button>`;
     }
     function pickerHtml() {
       if (!cfg.picker) return '';
-      return `<p class="tip q-picker-tip">👆 Bấm số để chọn câu. ⭐ = đúng ngay lần đầu · ✓ = đã làm đúng</p>
+      return `<p class="tip q-picker-tip">👆 Bấm số để chọn câu. ⭐ = đúng ngay lần đầu · ✓ = làm lại mới đúng · ✗ = chưa đúng, làm lại nhé</p>
         <div class="q-picker">${Array.from({ length: cfg.total }, (_, k) => numHtml(k)).join('')}</div>`;
     }
     function bindPicker() {
@@ -363,10 +364,12 @@
         sfx.pop();
       }));
     }
-    function mark(firstGo) {
+    // st: 'ok' (đúng ngay lần đầu) | 'retry' (sai rồi mới đúng) | 'bad' (đã chọn sai, chưa làm đúng)
+    function mark(st) {
       if (!cfg.picker) return;
       const m = marks();
-      if (m[idx] !== 'ok') m[idx] = firstGo ? 'ok' : 'retry';
+      if (m[idx] === 'ok' || (st === 'bad' && m[idx])) return;
+      m[idx] = st;
       save();
       const old = $(`.q-num[data-k="${idx}"]`, el);
       if (old) { old.outerHTML = numHtml(idx); bindPicker(); }
@@ -421,12 +424,13 @@
             done = true;
             b.classList.add('right');
             $$('.choice', box).forEach(x => { x.disabled = true; });
-            // Chỉ quiz có cfg.stars (Thử thách TIMO) mới cộng sao, và mỗi câu chỉ cộng 1 lần
+            // Chỉ quiz có cfg.stars (Thử thách TIMO) mới cộng sao: đúng ngay lần đầu, mỗi câu 1 lần.
+            // Câu đã từng chọn sai (kể cả lần làm trước) thì làm lại không được sao.
             const already = cfg.picker && marks()[idx];
-            const got = cfg.stars && !already ? (tries === 0 ? 2 : 1) : 0;
+            const got = cfg.stars && !already && tries === 0 ? 2 : 0;
             if (tries === 0) firstTry++;
             record(cfg.lessonId, q.vi, tries === 0);
-            mark(tries === 0);
+            mark(tries === 0 ? 'ok' : 'retry');
             sfx.ting();
             confetti(40);
             const cheer = pick(CHEER_OK);
@@ -440,6 +444,7 @@
             tries++;
             b.classList.add('wrong');
             b.disabled = true;
+            mark('bad');
             sfx.oops();
             talk(guide, pick(CHEER_TRY), 'oops');
           }
@@ -487,11 +492,13 @@
   }
 
   // ---------- Bài tự làm ----------
-  // Bé làm hết các câu rồi mới nộp. Nộp xong mới chấm và xem cách giải từng bước.
+  // Bé làm hết các câu rồi mới nộp. Nộp xong mới chấm; câu đúng xem được cách giải từng bước,
+  // câu sai chỉ báo sai (không hiện đáp án) để bé làm lại.
   // cfg: { lessonId, questions: [câu] }
   // câu: { en?, vi, src?, type: 'num' | 'letter' | 'oddeven' | 'choice', answer, choices?: [{ value, html }],
   //        visual?(box) → đồ dùng, steps: [bước giải] }
-  // Mỗi câu chỉ được cộng ⭐ một lần, làm lại không cộng thêm. Bài làm dở được nhớ lại.
+  // Mỗi câu chỉ được cộng ⭐ một lần. Câu đã từng làm sai thì làm lại đúng cũng không được ⭐.
+  // Bài làm dở được nhớ lại.
   const ODD_EVEN = [{ value: 'even', html: '<b>Chẵn</b><small>even</small>' }, { value: 'odd', html: '<b>Lẻ</b><small>odd</small>' }];
   const norm = v => String(v).trim().toUpperCase();
   const filled = v => v != null && v !== '';
@@ -570,8 +577,29 @@
 
   function selfTest(el, cfg) {
     const qs = cfg.questions, n = qs.length;
-    const rec = () => state.tests[cfg.lessonId] || (state.tests[cfg.lessonId] = { ans: {}, done: false, got: {}, score: 0, best: 0 });
+    // miss[k]: câu k đã từng nộp sai → làm lại đúng cũng không được sao (bài lưu từ bản cũ chưa có miss)
+    const rec = () => {
+      const r = state.tests[cfg.lessonId] || (state.tests[cfg.lessonId] = { ans: {}, done: false, got: {}, score: 0, best: 0 });
+      if (!r.miss) {
+        r.miss = {};
+        if (r.done) qs.forEach((q, k) => { if (filled(r.ans[k]) && !isRight(q, r.ans[k])) r.miss[k] = true; });
+      }
+      return r;
+    };
     let idx = 0;
+    // Chấm câu k: trả về số ⭐ được cộng (2 nếu đúng, chưa nhận sao, và chưa từng sai)
+    function judge(k) {
+      const r = rec(), q = qs[k], v = r.ans[k];
+      if (!isRight(q, v)) { if (filled(v)) r.miss[k] = true; return 0; }
+      if (r.got[k] || r.miss[k]) return 0;
+      r.got[k] = true;
+      return 2;
+    }
+    function tally() {
+      const r = rec();
+      r.score = qs.filter((q, k) => isRight(q, r.ans[k])).length;
+      r.best = Math.max(r.best || 0, r.score);
+    }
     const toTop = () => { if (el.getBoundingClientRect().top < 0) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
     // mode: 'work' (đang làm) | 'result' (bảng điểm) | 'review' (xem cách giải)
@@ -580,7 +608,9 @@
       return `<div class="q-picker">${qs.map((q, k) => {
         let cls = '', mark = '';
         if (mode === 'work') cls = filled(r.ans[k]) ? 'filled' : '';
-        else { const ok = isRight(q, r.ans[k]); cls = ok ? 'ok' : 'bad'; mark = `<i>${ok ? '⭐' : '✗'}</i>`; }
+        else if (!isRight(q, r.ans[k])) { cls = 'bad'; mark = '<i>✗</i>'; }
+        else if (r.miss[k]) { cls = 'retry'; mark = '<i>✓</i>'; }
+        else { cls = 'ok'; mark = '<i>⭐</i>'; }
         if (mode !== 'result' && k === idx) cls += ' cur';
         return `<button class="q-num ${cls}" data-k="${k}" aria-label="Câu ${k + 1}">${k + 1}${mark}</button>`;
       }).join('')}</div>`;
@@ -626,13 +656,13 @@
 
     function grade() {
       const r = rec();
-      let right = 0, gain = 0;
+      let gain = 0;
       qs.forEach((q, k) => {
-        const ok = isRight(q, r.ans[k]);
-        if (ok) { right++; if (!r.got[k]) { r.got[k] = true; gain += 2; } }
-        record(cfg.lessonId, q.vi, ok);
+        gain += judge(k);
+        record(cfg.lessonId, q.vi, isRight(q, r.ans[k]));
       });
-      Object.assign(r, { done: true, score: right, best: Math.max(r.best || 0, right) });
+      r.done = true;
+      tally();
       save();
       result(gain, true);
       toTop();
@@ -641,15 +671,15 @@
 
     function result(gain, justNow) {
       const r = rec(), right = r.score, good = right * 2 >= n;
-      let msg = right === n ? 'Đúng hết luôn! Con giỏi quá!' : 'Mình cùng xem cách giải các câu ✗ nhé!';
-      if (justNow) msg = (gain ? `Con nhận được ${gain} ⭐! ` : right ? 'Các câu đúng này con đã nhận ⭐ rồi. ' : '') + msg;
+      let msg = right === n ? 'Đúng hết luôn! Con giỏi quá!' : 'Con làm lại các câu ✗ nhé!';
+      if (justNow) msg = (gain ? `Con nhận được ${gain} ⭐! ` : right ? 'Các câu đúng này không được thêm ⭐ nữa. ' : '') + msg;
       el.innerHTML = `<div class="quiz quiz-end pop-in">
           <div class="zb zb-big" data-zoombe="${good ? 'party' : 'think'}"></div>
           <h3 class="say">Con đúng ${right} trên ${n} câu!</h3>
           <p class="say">${msg}</p>
-          <p class="tip">👆 Bấm vào số câu để xem cách giải. ⭐ = đúng · ✗ = chưa đúng</p>
+          <p class="tip">👆 Bấm vào số câu để làm lại câu ✗ hoặc xem cách giải câu đúng. ⭐ = đúng · ✓ = làm lại mới đúng (không có sao) · ✗ = chưa đúng</p>
           ${picker('result')}
-          <div class="btn-row"><button class="btn btn-big t-review">🔍 Xem cách giải</button><button class="btn btn-ghost t-again">↺ Làm lại bài</button></div>
+          <div class="btn-row"><button class="btn btn-big t-review">${right === n ? '🔍 Xem cách giải' : '✏️ Làm lại câu sai'}</button><button class="btn btn-ghost t-again">↺ Làm lại bài</button></div>
         </div>`;
       mountZoombe(el);
       bindNums(review);
@@ -670,15 +700,14 @@
       }));
     }
 
+    // Câu đúng: xem cách giải. Câu sai: chỉ báo sai, không hiện đáp án, bé làm lại ngay tại đây.
     function review() {
-      const r = rec(), q = qs[idx], v = r.ans[idx], ok = isRight(q, v);
+      const r = rec(), q = qs[idx], v = r.ans[idx];
+      if (!isRight(q, v)) { redo(); return; }
       el.innerHTML = `<div class="quiz pop-in">
           ${picker('review')}
           ${qHead(q, idx, n)}
-          <div class="verdict ${ok ? 'ok' : 'bad'}">
-            <div>Con trả lời: ${answerHtml(q, v)} ${ok ? '✅' : '❌'}</div>
-            ${ok ? '' : `<div>Đáp án đúng: ${answerHtml(q, q.answer)}</div>`}
-          </div>
+          <div class="verdict ok"><div>Con trả lời: ${answerHtml(q, v)} ✅</div></div>
           <h3 class="sol-title">🪄 Cách giải <small class="tip">(bấm "Tiếp theo" để xem từng bước)</small></h3>
           <div class="${q.visual ? 'ex-layout' : ''}">${q.visual ? '<div class="q-visual"></div>' : ''}<div class="t-steps"></div></div>
           ${navRow(review, '<div class="btn-row"><button class="btn btn-big t-board">🏆 Về bảng điểm</button></div>')}
@@ -687,6 +716,54 @@
       bindNav(review);
       solve($('.t-steps', el), q, $('.q-visual', el));
       $('.t-board', el).addEventListener('click', () => { result(0, false); toTop(); });
+    }
+
+    function redo() {
+      const r = rec(), q = qs[idx], v = r.ans[idx];
+      let draft = '';
+      const told = filled(v) ? `Con trả lời: ${answerHtml(q, v)} ❌ Chưa đúng rồi! Con làm lại nhé.` : 'Câu này con chưa làm. Con làm nhé!';
+      el.innerHTML = `<div class="quiz pop-in">
+          ${picker('review')}
+          ${qHead(q, idx, n)}
+          <div class="verdict bad"><div class="t-told">${told}</div></div>
+          <div class="q-visual"></div>
+          <div class="ans-area"></div>
+          <div class="btn-row"><button class="btn btn-big t-check">✅ Kiểm tra</button></div>
+          ${navRow(review, '<div class="btn-row"><button class="btn btn-ghost t-board">🏆 Về bảng điểm</button></div>')}
+        </div>`;
+      bindNums(review);
+      bindNav(review);
+      if (q.visual) q.visual($('.q-visual', el));
+      answerPad($('.ans-area', el), q, '', x => { draft = x; });
+      $('.t-board', el).addEventListener('click', () => { result(0, false); toTop(); });
+      $('.t-check', el).addEventListener('click', () => {
+        const told = $('.t-told', el);
+        if (!filled(draft)) {
+          told.textContent = 'Con chọn hoặc điền đáp án trước nhé!';
+          restart(told, 'pop');
+          say(told.textContent);
+          return;
+        }
+        r.ans[idx] = draft;
+        const got = judge(idx);
+        tally();
+        save();
+        if (isRight(q, draft)) {
+          sfx.ting();
+          confetti(40);
+          const cheer = pick(CHEER_OK);
+          say(got ? `${cheer} Con được ${got} sao!` : cheer);
+          if (got) addStars(got);
+          review();
+        } else {
+          sfx.oops();
+          told.innerHTML = `Con trả lời: ${answerHtml(q, draft)} ❌ Vẫn chưa đúng, con thử lại nhé!`;
+          restart(told, 'pop');
+          say('Vẫn chưa đúng, con thử lại nhé!');
+          const num = $(`.q-num[data-k="${idx}"]`, el);
+          if (num) restart(num, 'pop');
+        }
+      });
     }
 
     if (rec().done) result(0, false);
