@@ -364,5 +364,121 @@
     return { mark(i) { const e = $$('.scale-one', box)[i]; if (e) e.classList.add('hl'); TV.sfx.pop(); } };
   }
 
-  TV.vis = { ABC, seq, alpha, chips, bar, pairs, GROUP_COLORS, clock, queue, groups, blocks, segs, grid, poly, cubes, coins, scales };
+  // ---------- Hình ghép từ các ô vuông (hình không phải lưới đủ hàng đủ cột) ----------
+  // list: [[hàng, cột], …] – các ô có trong hình. show(spots, k): lần lượt tô từng hình vuông k × k ô,
+  // spots: [[hàng, cột], …] là góc trên bên trái của các hình vuông đó.
+  function cells(box, list) {
+    const s = 40, pad = 6;
+    const rows = Math.max(...list.map(x => x[0])) + 1, cols = Math.max(...list.map(x => x[1])) + 1;
+    const W = cols * s + pad * 2, H = rows * s + pad * 2;
+    box.innerHTML = `<div class="v-svg v-grid"><svg viewBox="0 0 ${W} ${H}" style="max-width:${Math.min(W * 1.4, 340)}px" aria-hidden="true">${list.map(([r, c]) =>
+      `<rect x="${pad + c * s}" y="${pad + r * s}" width="${s}" height="${s}" fill="#fff" stroke="#2b2d42" stroke-width="2.5"/>`).join('')}<rect class="g-mark" x="0" y="0" width="0" height="0" fill="rgba(252,196,25,.45)" stroke="#e8590c" stroke-width="4" rx="4"/></svg><p class="g-say"></p></div>`;
+    const svg = $('svg', box), mk = $('.g-mark', box), say = $('.g-say', box);
+    let timers = [];
+    return {
+      show(spots, k) {
+        timers.forEach(clearTimeout);
+        timers = [];
+        stagger(spots.map(([r, c], i) => () => {
+          Object.entries({ x: pad + c * s + 3, y: pad + r * s + 3, width: k * s - 6, height: k * s - 6 }).forEach(([a, v]) => mk.setAttribute(a, v));
+          if (k === 1) addSvg(svg, 'text', { x: pad + c * s + s / 2, y: pad + r * s + s / 2 + 6, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 800, fill: '#e8590c' }, i + 1);
+          say.innerHTML = `Hình vuông ${k} × ${k} ô: <b>${i + 1}</b>`;
+        }), 500, timers);
+      },
+    };
+  }
+
+  // ---------- Hình vẽ từ điểm và đường thẳng: đếm tam giác, đếm đoạn thẳng ----------
+  // fig: { pts: { A: [x, y], … } trong khung 0..100, lines: [['A', 'D', 'B'], …] – mỗi đường thẳng đi qua các điểm theo thứ tự,
+  //        dots?: vẽ chấm ở các điểm, fill?: [[điểm…], …] – các miếng tô xám (vd cây thông) }
+  function lines(box, fig) {
+    const sc = 2.6, X = p => fig.pts[p][0] * sc + 16, Y = p => fig.pts[p][1] * sc + 16;
+    const xs = Object.values(fig.pts).map(p => p[0] * sc + 16), ys = Object.values(fig.pts).map(p => p[1] * sc + 16);
+    const W = Math.max(...xs) + 16, H = Math.max(...ys) + 16;
+    const fills = (fig.fill || []).map(ps => `<polygon points="${ps.map(p => `${X(p)},${Y(p)}`).join(' ')}" fill="#dee2e6"/>`).join('');
+    const ls = fig.lines.map(l => `<line x1="${X(l[0])}" y1="${Y(l[0])}" x2="${X(l[l.length - 1])}" y2="${Y(l[l.length - 1])}" stroke="#2b2d42" stroke-width="3" stroke-linecap="round"/>`).join('');
+    const dots = fig.dots ? Object.keys(fig.pts).map(p => `<circle cx="${X(p)}" cy="${Y(p)}" r="5.5" fill="#2b2d42"/>`).join('') : '';
+    box.innerHTML = `<div class="v-svg"><svg viewBox="0 0 ${W} ${H}" style="max-width:${Math.min(W * 1.2, 320)}px" aria-hidden="true">${fills}${ls}${dots}
+      <polygon class="f-mark" points="" fill="rgba(252,196,25,.55)" stroke="#e8590c" stroke-width="4" stroke-linejoin="round"/></svg><p class="g-say"></p></div>`;
+    const svg = $('svg', box), mk = $('.f-mark', box), say = $('.g-say', box);
+    let timers = [], k = 0;
+    return {
+      // Lần lượt tô từng tam giác, đếm tiếp từ số "from" (để đếm nhiều nhóm liền nhau)
+      tris(list, label, from) {
+        timers.forEach(clearTimeout);
+        timers = [];
+        stagger(list.map((t, i) => () => {
+          mk.setAttribute('points', t.map(p => `${X(p)},${Y(p)}`).join(' '));
+          say.innerHTML = `${label || 'Tam giác'}: <b>${(from || 0) + i + 1}</b>`;
+        }), 650, timers);
+      },
+      // Vẽ các đoạn thẳng trên một đường thẳng (vòng cung để bé đếm), đánh số tiếp từ "from"
+      segs(line, from) {
+        const color = SEG_COLORS[k++ % SEG_COLORS.length], pairs = [];
+        line.forEach((a, i) => line.slice(i + 1).forEach(b => pairs.push([a, b])));
+        stagger(pairs.map(([a, b], i) => () => {
+          addSvg(svg, 'line', { x1: X(a), y1: Y(a), x2: X(b), y2: Y(b), stroke: color, 'stroke-width': 7, 'stroke-linecap': 'round', opacity: 0.75, class: 'v-draw' });
+          badge(svg, (X(a) + X(b)) / 2, (Y(a) + Y(b)) / 2, (from || 0) + i + 1, color);
+        }), 450, timers);
+      },
+    };
+  }
+
+  // ---------- Khối lập phương nhìn từ phía trước (mặt trước, mặt trên, mặt phải) ----------
+  // list: [[c, d, z], …] – c: cột (sang phải), d: hàng (0 là hàng gần mắt nhất, số lớn ở phía sau), z: tầng (0 là dưới cùng)
+  // hidden: các khối bị che (vẫn được vẽ, reveal() hiện viền nét đứt để bé thấy khối nằm ở đâu)
+  function stack(box, list, hidden) {
+    const s = 40, dx = 15, dy = 14;
+    const P = (c, d, z) => [c * s + d * dx, -z * s - d * dy];
+    const order = list.slice().sort((a, b) => b[1] - a[1] || a[2] - b[2] || a[0] - b[0]);
+    const pts = [];
+    const poly = (ps, fill, cls) => { pts.push(...ps); return `<polygon class="${cls}" points="${ps.map(p => p.join(',')).join(' ')}" fill="${fill}" stroke="#2b2d42" stroke-width="1.6" stroke-linejoin="round"/>`; };
+    const cube = ([c, d, z], cls) => {
+      const [x, y] = P(c, d, z);
+      return poly([[x, y], [x + s, y], [x + s, y - s], [x, y - s]], '#fff', `${cls} cf`)
+        + poly([[x, y - s], [x + s, y - s], [x + s + dx, y - s - dy], [x + dx, y - s - dy]], '#e9ecef', `${cls} ct`)
+        + poly([[x + s, y], [x + s + dx, y - dy], [x + s + dx, y - s - dy], [x + s, y - s]], '#adb5bd', `${cls} cr`);
+    };
+    const body = order.map(q => cube(q, `cb z${q[2]}`)).join('');
+    const ghost = (hidden || []).map(q => cube(q, 'cb-ghost')).join('');
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const x0 = Math.min(...xs) - 4, y0 = Math.min(...ys) - 4, w = Math.max(...xs) - x0 + 4, h = Math.max(...ys) - y0 + 4;
+    box.innerHTML = `<div class="v-svg v-cubes"><svg viewBox="${x0} ${y0} ${w} ${h}" style="max-width:${Math.min(w * 1.5, 300)}px" aria-hidden="true">${body}<g class="ghosts" hidden>${ghost}</g></svg></div>`;
+    return {
+      // Tô các khối ở tầng z (tầng dưới cùng là 0)
+      layer(z) { $$(`.cb.z${z}`, box).forEach(p => p.classList.add('hl')); TV.sfx.pop(); },
+      reveal() { $('.ghosts', box).hidden = false; TV.sfx.pop(); },
+    };
+  }
+
+  // ---------- Các nhóm kí hiệu theo quy luật ----------
+  // list: [{ n: cạnh lưới (0 = không kẻ lưới), on: [[hàng, cột], …] – ô có kí hiệu, pile?: [1, 2, 3] – xếp chồng kiểu kim tự tháp }]
+  // Nhóm cuối có ask: true là nhóm cần tìm (hiện dấu ?).
+  function sym(box, list, mark) {
+    const one = g => {
+      if (g.ask) return '<div class="sym-ask">?</div>';
+      if (g.pile) return `<div class="sym-pile">${g.pile.map(n => `<div>${`<i>${esc(mark)}</i>`.repeat(n)}</div>`).join('')}</div>`;
+      const on = new Set(g.on.map(([r, c]) => r + ',' + c));
+      let cellsHtml = '';
+      for (let r = 0; r < g.n; r++) for (let c = 0; c < g.n; c++) cellsHtml += `<span>${on.has(r + ',' + c) ? esc(mark) : ''}</span>`;
+      return `<div class="sym-grid" style="--n:${g.n}">${cellsHtml}</div>`;
+    };
+    box.innerHTML = `<div class="sym-groups">${list.map((g, i) => `<div class="sym-g">${one(g)}<small>Nhóm ${i + 1}</small><b class="sym-n"></b></div>`).join('')}</div>`;
+    const gs = $$('.sym-g', box);
+    return {
+      // Ghi số kí hiệu đếm được dưới nhóm i
+      count(i, n) { const b = $('.sym-n', gs[i]); if (b) { b.textContent = n; b.classList.add('v-pop'); } TV.sfx.pop(); },
+    };
+  }
+
+  // ---------- Phép tính đặt dọc (bài toán mật mã) ----------
+  // rows: các số hạng (chuỗi, vd 'X5'), op: '+' hoặc '−', res: kết quả (chuỗi)
+  function vcalc(box, rows, op, res) {
+    const w = Math.max(...rows.concat(res).map(r => r.length));
+    const line = (t, sign) => `<div class="vc-row"><span class="vc-op">${sign || ''}</span>${t.padStart(w, ' ').split('').map(ch => `<span class="vc-d ${/[A-Z]/.test(ch) ? 'unk' : ''}">${ch === ' ' ? '' : esc(ch)}</span>`).join('')}</div>`;
+    box.innerHTML = `<div class="vcalc">${rows.map((r, i) => line(r, i === rows.length - 1 ? op : '')).join('')}<div class="vc-bar" style="width:${(w + 1) * 1.1}em"></div>${line(res)}</div>`;
+    return {};
+  }
+
+  TV.vis = { ABC, seq, alpha, chips, bar, pairs, GROUP_COLORS, clock, queue, groups, blocks, segs, grid, poly, cubes, coins, scales, cells, lines, stack, sym, vcalc };
 })();

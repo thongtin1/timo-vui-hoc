@@ -158,11 +158,13 @@
   makeWheel($('#wheelPlay'), { controls: true, seven: true, start: realToday });
 
   // ---------- Ví dụ từng bước ----------
-  // Xem hết 3 ví dụ mới được làm Thử thách TIMO và Bài tự làm
-  const seen = TV.exampleGate('ngay', 3, [$('#bookDate'), $('#testDate')]);
+  // Xem hết 3 ví dụ mới được làm Thử thách TIMO; làm đúng hết Thử thách TIMO mới được làm Bài tự làm
+  const seen = TV.examplesSeen('ngay', 3);
+  TV.lockUntil($('#bookDate'), [seen]);
+  TV.lockUntil($('#testDate'), [seen, TV.quizDone('ngay-timo', BOOK_DATE.length)]);
   function example(id, start, makeSteps) {
     const w = makeWheel($(`#${id}Wheel`), { locked: true, start });
-    TV.steps($(`#${id}Steps`), makeSteps(w), { onReset: () => w.reset(start), onDone: () => seen(Number(id.slice(2)) - 1) }); // 'ex1' → ví dụ 0
+    TV.steps($(`#${id}Steps`), makeSteps(w), { onReset: () => w.reset(start), onDone: () => seen.done(Number(id.slice(2)) - 1) }); // 'ex1' → ví dụ 0
   }
   const jump = (w, dir) => () => w.later(() => w.hop(dir, true));
 

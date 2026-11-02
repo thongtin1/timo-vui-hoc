@@ -8,9 +8,14 @@ Web ôn thi TIMO lớp 1 theo từng dạng toán, cùng bạn Zoombe. Chạy ho
 3. **🎮 Luyện tập** – câu ngẫu nhiên, biết đúng sai ngay, có gợi ý.
 4. **📝 Bài tự làm** – câu lấy từ đề ôn TIMO, xem hết các ví dụ mới mở được (Thử thách TIMO cũng vậy). Làm hết rồi nộp bài. Câu đúng xem được cách giải; câu sai chỉ báo sai (không hiện đáp án) để bé làm lại.
 
-Chỉ **Bài tự làm** và **Thử thách TIMO** được cộng ⭐, và chỉ khi đúng ngay lần đầu. Câu đã làm sai thì làm lại đúng cũng không được sao.
+Chỉ **Bài tự làm** và **Thử thách TIMO** được cộng ⭐: mỗi câu đúng ngay lần đầu được 1 ⭐. Câu đã làm sai thì làm lại đúng cũng không được sao. Ở Bài 4 và Bài 5, phải làm đúng hết Thử thách TIMO mới mở Bài tự làm.
 
-Làm đúng được ⭐. Cứ 10 ⭐ mở 1 sticker. Sao dùng để đổi quà ở trang **🎁 Đổi quà**; bố mẹ tự đặt quà, phần cài đặt có câu hỏi chặn để bé không tự sửa.
+Làm đúng được ⭐. Cứ 10 ⭐ mở 1 sticker. Sao dùng để đổi quà ở trang **🎁 Đổi quà**; bố mẹ tự đặt quà, phần cài đặt có mật khẩu (đặt trong `js/doi-qua.js`, biến `PARENT_PIN`) để bé không tự sửa.
+
+## 📘 Bộ đề sách
+Trang `bo-de-sach.html`: các bài Luyện tập (Practice) trong sách ôn TIMO, 5 chủ đề, 21 bài, 151 câu, giữ đúng số Exercise như sách.
+Làm giống Thử thách TIMO: bé tự điền kết quả rồi bấm Kiểm tra, đúng ngay lần đầu được 1 ⭐.
+Dữ liệu ở `js/sach/`. Hình học được vẽ lại theo sách; `node test/check.js` tự đếm lại hình vuông, tam giác, đoạn thẳng, khối lập phương và thử mọi cách ghép số để kiểm tra đáp án.
 
 ## Mở trên điện thoại
 Web được đăng bằng GitHub Pages. Mở link trên điện thoại rồi:

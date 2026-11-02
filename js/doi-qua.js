@@ -1,7 +1,7 @@
 /* Đổi quà: bé dùng ⭐ đang có để đổi quà thật do bố mẹ đặt */
 (function () {
   'use strict';
-  const { $, $$, esc, rand } = TV;
+  const { $, $$, esc } = TV;
 
   function render() {
     const have = TV.available(), list = TV.getRewards(), st = TV.getState();
@@ -32,15 +32,15 @@
       : '<p class="muted">Chưa đổi quà nào. Làm bài để có sao nhé!</p>';
   }
 
-  // ---------- Bố mẹ: qua câu hỏi khó rồi mới được sửa quà ----------
+  // ---------- Bố mẹ: nhập mật khẩu rồi mới được sửa quà ----------
+  const PARENT_PIN = '101193';
   function gate() {
-    const a = rand(23, 59), b = rand(14, 39);
-    $('#parent').innerHTML = `<p>Phần này dành cho bố mẹ. Trả lời câu hỏi để mở:</p>
-      <div class="gate"><b>${a} + ${b} = </b><input type="number" inputmode="numeric" id="gateIn" aria-label="Kết quả"><button class="btn" id="gateBtn">Mở</button></div>
+    $('#parent').innerHTML = `<p>Phần này dành cho bố mẹ. Nhập mật khẩu để mở:</p>
+      <div class="gate"><b>🔒 Mật khẩu: </b><input type="password" inputmode="numeric" autocomplete="off" id="gateIn" aria-label="Mật khẩu"><button class="btn" id="gateBtn">Mở</button></div>
       <p class="muted" id="gateMsg"></p>`;
     const go = () => {
-      if (Number($('#gateIn').value) === a + b) editor();
-      else { $('#gateMsg').textContent = 'Chưa đúng, thử lại nhé.'; TV.sfx.oops(); }
+      if ($('#gateIn').value.trim() === PARENT_PIN) editor();
+      else { $('#gateMsg').textContent = 'Sai mật khẩu, thử lại nhé.'; $('#gateIn').value = ''; TV.sfx.oops(); }
     };
     $('#gateBtn').addEventListener('click', go);
     $('#gateIn').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });

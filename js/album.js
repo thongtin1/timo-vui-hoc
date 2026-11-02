@@ -12,6 +12,7 @@
     'ngay-test': 'Bài 4 · Bài tự làm',
     'tuoi-test': 'Bài 5 · Bài tự làm',
   };
+  (window.TVBook || []).forEach(L => { LESSONS[L.id] = 'Bộ đề sách · ' + L.title; });
   (window.TVTopics || []).forEach(t => {
     LESSONS[t.id + '-luyen'] = t.title + ' · Luyện tập';
     LESSONS[t.id + '-test'] = t.title + ' · Bài tự làm';

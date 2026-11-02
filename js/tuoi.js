@@ -67,8 +67,10 @@
   $('#yearFwd').addEventListener('click', () => moveYear(1));
 
   // ---------- Ví dụ từng bước ----------
-  // Xem hết 2 ví dụ mới được làm Thử thách TIMO và Bài tự làm
-  const seen = TV.exampleGate('tuoi', 2, [$('#bookAge'), $('#testAge')]);
+  // Xem hết 2 ví dụ mới được làm Thử thách TIMO; làm đúng hết Thử thách TIMO mới được làm Bài tự làm
+  const seen = TV.examplesSeen('tuoi', 2);
+  TV.lockUntil($('#bookAge'), [seen]);
+  TV.lockUntil($('#testAge'), [seen, TV.quizDone('tuoi-timo', BOOK_AGE.length)]);
   const b1 = makeBars($('#ex1Bars'), 14);
   TV.steps($('#ex1Steps'), [
     { text: '👧 Lacie <b>8 tuổi</b>.', run: () => b1.render([{ ...LACIE, age: 8 }]) },
@@ -78,7 +80,7 @@
     },
     { text: '🧮 Tuổi chị: 8 + 3 = <b>11</b>.' },
     { text: '🎉 Đáp án: chị của Lacie <b>11 tuổi</b>!', cls: 'answer' },
-  ], { onDone: () => seen(0) });
+  ], { onDone: () => seen.done(0) });
 
   const HARRY = { name: 'Harry', emoji: '👦', color: '#228be6' };
   const BROTHER = { name: 'Anh', emoji: '🧑', color: '#40c057' };
@@ -104,7 +106,7 @@
     { text: '🧑 Bây giờ anh <b>16 tuổi</b>. Harry ít hơn anh 5 tuổi.', run: () => { stopGrow(); b2.update([11, 16]); } },
     { text: '🧮 Tuổi Harry: 16 − 5 = <b>11</b>.' },
     { text: '🎉 Đáp án: Harry <b>11 tuổi</b>!', cls: 'answer' },
-  ], { onReset: stopGrow, onDone: () => seen(1) });
+  ], { onReset: stopGrow, onDone: () => seen.done(1) });
 
   // ---------- Bánh sinh nhật ----------
   function cakeHtml(n) {

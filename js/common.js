@@ -374,6 +374,7 @@
       if (m[idx] === 'ok' || (st === 'bad' && m[idx])) return;
       m[idx] = st;
       save();
+      relock();
       const old = $(`.q-num[data-k="${idx}"]`, el);
       if (old) { old.outerHTML = numHtml(idx); bindPicker(); }
     }
@@ -422,7 +423,7 @@
         // Chỉ quiz có cfg.stars (Thử thách TIMO) mới cộng sao: đúng ngay lần đầu, mỗi câu 1 lần.
         // Câu đã từng làm sai (kể cả lần làm trước) thì làm lại không được sao.
         const already = cfg.picker && marks()[idx];
-        const got = cfg.stars && !already && tries === 0 ? 2 : 0;
+        const got = cfg.stars && !already && tries === 0 ? 1 : 0;
         if (tries === 0) firstTry++;
         record(cfg.lessonId, q.vi, tries === 0);
         mark(tries === 0 ? 'ok' : 'retry');
@@ -520,42 +521,62 @@
     steps(stepsEl, list, { onReset: () => { if (q.visual && box) tool = q.visual(box); }, onDone });
   }
 
-  // ---------- Xem hết ví dụ mới được làm bài ----------
-  // key: mã bài, n: số ví dụ, targets: các ô bài làm (Thử thách TIMO, Bài tự làm) bị khoá đến khi xem xong.
-  // Trả về done(i): gọi khi bé xem tới bước cuối của ví dụ i. Đã xem xong thì nhớ luôn, lần sau không khoá nữa.
-  function exampleGate(key, n, targets) {
-    const seen = state.seen[key] || (state.seen[key] = {});
-    const left = () => Array.from({ length: n }, (_, i) => seen[i]).filter(x => !x).length;
-    const notes = targets.map(t => {
-      const d = document.createElement('div');
-      d.className = 'lock-note';
-      t.before(d);
-      return d;
-    });
+  // ---------- Khoá phần làm bài ----------
+  // lockUntil(target, conds): khoá target đến khi mọi điều kiện xong, hiện lời nhắc của điều kiện đầu tiên chưa xong.
+  // điều kiện: { left() → số việc còn lại, msg(k) → html, tab: tab cần sang, btn: chữ trên nút }
+  const locks = [];
+  const relock = () => locks.forEach(paint => paint());
+  function lockUntil(target, conds) {
+    const note = document.createElement('div');
+    note.className = 'lock-note';
+    target.before(note);
+    let cur = null;
     function paint() {
-      const k = left();
-      targets.forEach((t, j) => {
-        t.hidden = k > 0;
-        notes[j].hidden = k === 0;
-        if (k) {
-          notes[j].innerHTML = `<div class="zb" data-zoombe="think"></div>
-            <p class="say">🔒 Con xem hết ${n} ví dụ (bấm "Tiếp theo" tới bước cuối) rồi mới làm bài nhé! Còn <b>${k}</b> ví dụ nữa.</p>
-            <button class="btn btn-big">🧩 Đi xem ví dụ</button>`;
-          mountZoombe(notes[j]);
-        }
-      });
+      cur = conds.find(c => c.left() > 0) || null;
+      target.hidden = !!cur;
+      note.hidden = !cur;
+      if (!cur) return;
+      note.innerHTML = `<div class="zb" data-zoombe="think"></div>
+        <p class="say">🔒 ${cur.msg(cur.left())}</p>
+        <button class="btn btn-big">${cur.btn}</button>`;
+      mountZoombe(note);
     }
-    notes.forEach(d => d.addEventListener('click', e => {
-      if (!e.target.closest('.btn')) return;
-      const tab = $('[data-tab="vi-du"]');
+    note.addEventListener('click', e => {
+      if (!cur || !e.target.closest('.btn')) return;
+      const tab = $(`[data-tab="${cur.tab}"]`);
       if (tab) { tab.click(); $('#tabs').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    }));
+    });
+    locks.push(paint);
     paint();
-    return i => {
-      if (seen[i]) return;
-      seen[i] = true;
-      save();
-      paint();
+  }
+
+  // Điều kiện: xem hết n ví dụ của bài key. Gọi done(i) khi bé xem tới bước cuối của ví dụ i (máy nhớ luôn).
+  function examplesSeen(key, n) {
+    const seen = state.seen[key] || (state.seen[key] = {});
+    return {
+      left: () => Array.from({ length: n }, (_, i) => seen[i]).filter(x => !x).length,
+      msg: k => `Con xem hết ${n} ví dụ (bấm "Tiếp theo" tới bước cuối) rồi mới làm bài nhé! Còn <b>${k}</b> ví dụ nữa.`,
+      tab: 'vi-du',
+      btn: '🧩 Đi xem ví dụ',
+      done(i) {
+        if (seen[i]) return;
+        seen[i] = true;
+        save();
+        relock();
+      },
+    };
+  }
+
+  // Điều kiện: làm đúng hết total câu Thử thách TIMO (quiz có picker, lessonId)
+  function quizDone(lessonId, total) {
+    return {
+      left: () => {
+        const m = state.marks[lessonId] || {};
+        return Array.from({ length: total }, (_, k) => m[k]).filter(x => x !== 'ok' && x !== 'retry').length;
+      },
+      msg: k => `Con làm đúng hết ${total} câu Thử thách TIMO rồi mới làm Bài tự làm nhé! Còn <b>${k}</b> câu nữa.`,
+      tab: 'thu-thach',
+      btn: '🏆 Đi làm Thử thách TIMO',
     };
   }
 
@@ -563,8 +584,9 @@
   // Bé làm hết các câu rồi mới nộp. Nộp xong mới chấm; câu đúng xem được cách giải từng bước,
   // câu sai chỉ báo sai (không hiện đáp án) để bé làm lại.
   // cfg: { lessonId, questions: [câu] }
-  // câu: { en?, vi, src?, type: 'num' | 'letter' | 'oddeven' | 'choice', answer, choices?: [{ value, html }],
+  // câu: { en?, vi, src?, type: 'num' | 'letter' | 'word' | 'oddeven' | 'choice' | 'signs' | 'order', answer, choices?: [{ value, html }],
   //        visual?(box) → đồ dùng, steps: [bước giải] }
+  // Câu 'order' (sắp xếp số): nums là các số cần xếp, answer là chuỗi các số đã xếp, cách nhau dấu phẩy ('1,3,5').
   // Mỗi câu chỉ được cộng ⭐ một lần. Câu đã từng làm sai thì làm lại đúng cũng không được ⭐.
   // Bài làm dở được nhớ lại.
   const ODD_EVEN = [{ value: 'even', html: '<b>Chẵn</b><small>even</small>' }, { value: 'odd', html: '<b>Lẻ</b><small>odd</small>' }];
@@ -578,6 +600,7 @@
   function answerHtml(q, v) {
     if (!filled(v)) return '<span class="muted">chưa làm</span>';
     if (q.type === 'signs') return `<b class="ans-val">${esc(signsText(q, v))}</b>`;
+    if (q.type === 'order') return `<b class="ans-val">${esc(String(v).split(',').join(', '))}</b>`;
     const c = (listOf(q) || []).find(x => norm(x.value) === norm(v));
     return c ? `<span class="ans-chip">${c.html}</span>` : `<b class="ans-val">${esc(v)}</b>`;
   }
@@ -614,6 +637,30 @@
         restart(b, 'pop');
         sfx.pop();
         v = s.includes('?') ? '' : s.join('');
+        onChange(v);
+      });
+      return;
+    }
+    if (q.type === 'order') {
+      // Sắp xếp: bấm lần lượt từng số theo thứ tự, mỗi số chỉ bấm 1 lần. Xếp đủ hết các số mới tính là đã làm.
+      const nums = q.nums.map(String);
+      let picked = [];
+      if (v) v.split(',').forEach(n => { const i = nums.findIndex((x, k) => x === n && !picked.includes(k)); if (i >= 0) picked.push(i); });
+      box.innerHTML = `<div class="ord-out"></div>
+        <div class="ord-keys">${nums.map((n, i) => `<button class="key-btn" data-i="${i}">${esc(n)}</button>`).join('')}<button class="key-btn del" data-i="del">⌫</button></div>`;
+      const draw = () => {
+        $('.ord-out', box).innerHTML = picked.length ? picked.map(i => `<b>${esc(nums[i])}</b>`).join('') : '<span class="muted">👆 Bấm lần lượt các số theo thứ tự nhé</span>';
+        $$('.ord-keys [data-i]', box).forEach(b => { if (b.dataset.i !== 'del') b.disabled = picked.includes(Number(b.dataset.i)); });
+      };
+      draw();
+      box.addEventListener('click', e => {
+        const b = e.target.closest('.key-btn');
+        if (!b || b.disabled) return;
+        if (b.dataset.i === 'del') picked.pop();
+        else picked.push(Number(b.dataset.i));
+        draw();
+        sfx.pop();
+        v = picked.length === nums.length ? picked.map(i => nums[i]).join(',') : '';
         onChange(v);
       });
       return;
@@ -655,13 +702,13 @@
       return r;
     };
     let idx = 0;
-    // Chấm câu k: trả về số ⭐ được cộng (2 nếu đúng, chưa nhận sao, và chưa từng sai)
+    // Chấm câu k: trả về số ⭐ được cộng (1 nếu đúng, chưa nhận sao, và chưa từng sai)
     function judge(k) {
       const r = rec(), q = qs[k], v = r.ans[k];
       if (!isRight(q, v)) { if (filled(v)) r.miss[k] = true; return 0; }
       if (r.got[k] || r.miss[k]) return 0;
       r.got[k] = true;
-      return 2;
+      return 1;
     }
     function tally() {
       const r = rec();
@@ -907,7 +954,7 @@
     sfx, confetti, modal, ask,
     STICKERS, STARS_PER_STICKER, addStars, record, resetAll, getState: () => state,
     available, getRewards, setRewards, redeem,
-    steps, solve, exampleGate, quiz, selfTest, memory, ODD_EVEN, signsText,
+    steps, solve, lockUntil, examplesSeen, quizDone, quiz, selfTest, memory, ODD_EVEN, signsText,
   };
 
   renderTopbar();

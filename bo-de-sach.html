@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bộ đề sách</title>
+  <meta name="theme-color" content="#7048e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="guide">
+        <div class="zb float" data-zoombe="happy"></div>
+        <div class="bubble">
+          <p class="say">📘 Bộ đề sách: các bài Luyện tập trong sách ôn TIMO, đủ 5 chủ đề.</p>
+          <p class="say">Con tự tính rồi điền kết quả, bấm Kiểm tra. Đúng ngay lần đầu được 1 ⭐. Sai thì làm lại nhưng không có ⭐ nữa đâu nhé!</p>
+        </div>
+      </div>
+    </section>
+
+    <div id="bookParts"></div>
+
+    <section class="card" id="bookQuizCard" hidden>
+      <h2 id="bookTitle"></h2>
+      <p class="tip" id="bookNote" hidden></p>
+      <div id="bookQuiz"></div>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/visuals.js"></script>
+  <script src="js/sach/sach-logic.js"></script>
+  <script src="js/sach/sach-so-hoc.js"></script>
+  <script src="js/sach/sach-ly-thuyet-so.js"></script>
+  <script src="js/sach/sach-hinh-hoc.js"></script>
+  <script src="js/sach/sach-to-hop.js"></script>
+  <script src="js/bo-de-sach.js"></script>
+</body>
+</html>
